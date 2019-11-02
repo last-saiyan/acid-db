@@ -5,6 +5,9 @@ public class Page implements Utils {
 
     public Page(){
 
+        StringBuilder page = new StringBuilder(Utils.pageSize);
+
+
 
     }
 
@@ -17,6 +20,7 @@ public class Page implements Utils {
 
         return null;
     }
+
 
 
 

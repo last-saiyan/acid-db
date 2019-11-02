@@ -2,7 +2,7 @@ package Db;
 
 public interface Utils {
 
-    public int pageSize = 16000;
+    public int pageSize = 100;
 
 
 
