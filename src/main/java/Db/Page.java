@@ -1,6 +1,6 @@
 package Db;
 
-public class Page implements Constants {
+public class Page implements Utils {
 
 
     public Page(){

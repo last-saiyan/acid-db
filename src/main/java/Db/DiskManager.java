@@ -34,11 +34,13 @@ public class DiskManager implements Constants {
         int startMemory = startRange(id);
         int endMemory = endRange(startMemory);
 
-
-
         return null;
     }
 
+    private static boolean writePage(int id){
+
+        return false;
+    }
 
 
 }
