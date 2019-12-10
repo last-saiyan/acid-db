@@ -1,19 +1,15 @@
 package Db.server;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 
 
 public class WorkerRunnable implements Runnable {
 
     protected Socket clientSocket = null;
-    protected String serverText   = null;
 
-    public WorkerRunnable(Socket clientSocket, String serverText) {
+    public WorkerRunnable(Socket clientSocket) {
         this.clientSocket = clientSocket;
-        this.serverText   = serverText;
     }
 
     @Override
@@ -22,13 +18,21 @@ public class WorkerRunnable implements Runnable {
             InputStream input  = clientSocket.getInputStream();
             OutputStream output = clientSocket.getOutputStream();
             long time = System.currentTimeMillis();
-            output.write(("HTTP/1.1 200 OK\n\nWorkerRunnable: " +
-                    this.serverText + " - " +
-                    time +
-                    "").getBytes());
-            output.close();
-            input.close();
-            System.out.println("Request processed: " + time);
+
+            String responseString = "connected to server - " + time;
+            output.write(responseString.getBytes());
+
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(input), 1024);
+
+            String tempString = null;
+            while((tempString = bufferedReader.readLine()) != null){
+                System.out.println(tempString);
+                if(clientSocket.isClosed()){
+                    System.out.println("closed");
+                }
+            }
+            System.out.println("connection closed");
+
         } catch (IOException e) {
             //report exception somewhere.
             e.printStackTrace();
