@@ -9,7 +9,7 @@ import java.nio.channels.FileChannel;
 public class DiskManager implements Constants {
 
 
-    DiskManager() throws Exception{
+    public DiskManager() throws Exception{
         this.file = new File("../abc.txt");
 
         FileChannel fc = new FileInputStream(file).getChannel();
@@ -30,14 +30,15 @@ public class DiskManager implements Constants {
     }
 
 
-    private static ByteBuffer getPage(int id){
+    public static ByteBuffer getPage(int id){
         int startMemory = startRange(id);
         int endMemory = endRange(startMemory);
 
         return null;
     }
 
-    private static boolean writePage(int id){
+    public static boolean writePage(int id){
+
 
         return false;
     }

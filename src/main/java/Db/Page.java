@@ -7,18 +7,18 @@ public class Page implements Utils {
     HashMap<String, Integer> pageHeader;
 
 
-    public Page(){
-
+    public Page(int id){
+        pageHeader.put("id",id);
         byte[] page = new byte[Utils.pageSize];
-
-
-        StringBuilder page = new StringBuilder(Utils.pageSize);
-
-
-
     }
-    public Page(byte[] pageInByte){
 
+    private byte[] headerToByte(){
+
+
+        return null;
+    }
+
+    public Page(byte[] pageInByte){
 
     }
 
@@ -28,18 +28,10 @@ public class Page implements Utils {
     }
 
 
-    private StringBuilder s ;
-
-
-
     public Page getPage(int id){
-
+// diskmanager
 
         return null;
     }
-
-
-
-
 
 }
