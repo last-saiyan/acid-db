@@ -11,8 +11,9 @@ public class Page implements Utils {
 
     public Page(int id){
         pageHeader.put("id",id);
-//        pageHeader.put("size",32);
-        pageHeader.put("size",33);
+//        pageHeader.put("size",30);
+//        pageHeader.put("size",31);
+        pageHeader.put("size",29);
         pageData = new byte[Utils.pageSize - pageHeader.size()*4];
     }
     private Page(){
