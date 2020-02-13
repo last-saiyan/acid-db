@@ -7,6 +7,7 @@
     <groupId>random</groupId>
     <artifactId>db</artifactId>
     <version>1.0-SNAPSHOT</version>
+
     <dependencies>
         <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
         <dependency>
@@ -17,7 +18,6 @@
     </dependencies>
 
     <build>
-
         <plugins>
 
             <plugin>
