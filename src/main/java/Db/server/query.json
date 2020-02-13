@@ -1,0 +1,29 @@
+[
+  {
+    "type": "select",
+    "columns": ["column1, column2"],
+
+    "where": "a>5",
+    "values": [
+      {
+        "colName" :"column1",
+        "value": "value1"
+      },
+      {
+        "colName":"column2",
+        "value": "value2"
+      }
+    ]
+  },
+
+
+  {
+    "transaction": "begin"
+  },
+  {
+    "transaction": "commit"
+  },
+  {
+    "transaction": "rollback"
+  }
+]
