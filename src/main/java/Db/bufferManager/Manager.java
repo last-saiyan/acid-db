@@ -17,7 +17,6 @@ public class Manager {
     public Manager(int size){
         bufferPool = new Page[size];
         pageMapping = new HashMap();
-
     }
 
     private void flushPageToDisk(int id){
@@ -35,6 +34,11 @@ public class Manager {
 
     }
 
+    public boolean isPagePinned(int id){
+
+        return false;
+    }
+
     private void evictPage(){
 //        when the buffer manager does not have any more space for new page
 //        this function is called to evict page
@@ -50,6 +54,6 @@ public class Manager {
 
 class PageMeta{
     public int id;
-    public int pinCounter;
-    public boolean dirty;
+    public int pinCounter = 0;
+    public boolean dirty = false;
 }
