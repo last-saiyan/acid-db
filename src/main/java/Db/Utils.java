@@ -9,6 +9,7 @@ public interface Utils {
 
     public int pageSize = 100;
 
+    public int bfPoolsize = 100;
 
     public static byte[] stringToByte(String str, int bytes){
         // does this support other encoding?
