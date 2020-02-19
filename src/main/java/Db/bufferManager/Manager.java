@@ -1,10 +1,6 @@
 package Db.bufferManager;
 
-import Db.DiskManager;
-import Db.Page;
-import Db.Utils;
-
-import java.util.HashMap;
+import Db.diskManager.Page;
 
 public class Manager {
 

@@ -1,5 +1,8 @@
-package Db;
+package Db.diskManager;
 
+
+import Db.Constants;
+import Db.Utils;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -33,7 +36,7 @@ public class DiskManager implements Constants {
 
     public boolean writePage(int id, byte[] page){
         try {
-            ffile.seek(id*Utils.pageSize);
+            ffile.seek(id* Utils.pageSize);
             ffile.write(page);
 //            writer.write(page,0, Utils.pageSize);
         } catch (IOException e) {

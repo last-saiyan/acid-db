@@ -1,4 +1,6 @@
-package Db;
+package Db.diskManager;
+
+import Db.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +16,7 @@ public class Page implements Utils {
 //        pageHeader.put("size",30);
 //        pageHeader.put("size",31);
         pageHeader.put("size",29);
+        pageHeader.put("capacity",100);
         pageData = new byte[Utils.pageSize - pageHeader.size()*4];
     }
     private Page(){
