@@ -14,4 +14,8 @@ public class Field {
     public Type type;
     public String fieldName;
 
+    public int getSize(){
+        return this.type.size;
+    }
+
 }

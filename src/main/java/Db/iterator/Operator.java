@@ -1,6 +1,11 @@
 package Db.iterator;
 
-public interface Operator {
+public interface Operator extends Iterator{
+
+
+
+
+
 
 
 }
