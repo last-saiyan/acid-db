@@ -8,14 +8,12 @@ public class StringType extends Type {
 
 
     private String value;
-    private int noBytes;
     private byte[] strByte;
-    public StringType(String strValue, int noBytes){
-        super("STR");
+    public StringType(String strValue, int size){
+        super("STR",size);
         this.value = value;
-        this.noBytes = noBytes;
 //        throw exception if len is larger
-        this.strByte = Utils.stringToByte(strValue,noBytes);
+        this.strByte = Utils.stringToByte(strValue,size);
     }
 
     @Override

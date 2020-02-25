@@ -8,11 +8,11 @@ public class IntType extends Type {
     private int value;
 
     public IntType(int value){
-        super("INT");
+        super("INT", 4);
         this.value = value;
     }
     public IntType(String value){
-        super("INT");
+        super("INT", 4);
         this.value = Integer.parseInt(value);
     }
 
