@@ -4,15 +4,19 @@ public abstract class Type {
 
     public final String type;
     public final int size;
+    private byte[] value;
 
 
-    public Type(String type, int size){
+    public Type(String type, int size, byte[]value){
         this.size = size;
         this.type = type;
+        this.value = value;
     }
 
 //    abstract public Object returnValue();
 
-    abstract public byte[] toByteArray();
+    public byte[] getValue(){
+        return value;
+    }
 
 }
