@@ -84,6 +84,22 @@ public class Page implements Utils {
         return null;
     }
 
+    public int getHeader(String headerName){
+
+//        check if the key exists and throw exception
+
+         return this.pageHeader.get(headerName);
+    }
+
+    public int getHeaderSize(){
+        return pageHeader.size();
+    }
+
+    public byte[] getPageData(int ){
+
+        return null;
+    }
+
 
     public Page getPage(int id){
 // diskmanager or buffermanager
