@@ -10,4 +10,6 @@ abstract public class Replacer {
 
     public abstract int pickVictim();
 
+    public abstract void update(int frameNo);
+
 }

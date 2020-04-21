@@ -8,12 +8,12 @@ public class Manager {
     private Page[] bufferPool;
 //use concurrent hashmap when supporting concurrency
     private PageMeta[] pageMapping ;
+    public int size;
 
 
-
-    private int getPage(int id){
+    private int getPageInd(int pId){
         for(int i=0;i<pageMapping.length;i++){
-            if(id == pageMapping[i].id)
+            if(pId == pageMapping[i].pId)
                 return i;
         }
         return -1;
@@ -26,29 +26,36 @@ public class Manager {
         bufferPool = new Page[size];
         pageMapping = new PageMeta[size];
         replacer = new Lru(this);
+        this.size = size;
         for(int i=0;i<size;i++){
             pageMapping[i] = new PageMeta();
         }
     }
 
+    /*
+    * if the page is dirty the page
+    * has to be flushed to the disk
+    *
+    * */
+
     private void flushPageToDisk(int id){
-//        if the page is dirty the page has to be flushed to the disk
-
-        int pageInd = getPage(id);
-        pageMapping[pageInd].dirty = false;
-
+//        int pageInd = getPageInd(id);
+        pageMapping[id].dirty = false;
+        pageMapping[id].pinCounter = 0;
+        discardPage(id);
     }
 
     private void discardPage(int id){
 
+
     }
 
-    public void pinPage(int id){
+    public void pinPage(int pId){
 //        this gets called when a query needs to use a page
 //        pinned pages cant be evicted
 //        check the pagemapping if the page is in bufferpool else get from disk
 
-        int pageInd = getPage(id);
+        int pageInd = getPageInd(pId);
 
         if(pageInd > 0){
 //            present in bufferpool
@@ -57,23 +64,27 @@ public class Manager {
 //            not in bufferpool
             int victimID = replacer.pickVictim();
             if(victimID<0){
+//                need to wait till queries get executed and pages to flushed
 //                throw exception
             }
 
             if(pageMapping[victimID].dirty){
 //                write dirty page to disk
                 flushPageToDisk(victimID);
+                pageMapping[victimID].pId = pId;
+                pageMapping[victimID].pinCounter++;
+                replacer.update(pId);
             }else{
-
-                pageMapping[victimID] =
-
+                pageMapping[victimID].pId = pId;
+                pageMapping[victimID].pinCounter++;
+                replacer.update(pId);
             }
 
         }
     }
 
     public boolean isPagePinned(int id){
-        if(pageMapping[getPage(id)].pinCounter == 0){
+        if(pageMapping[getPageInd(id)].pinCounter == 0){
             return false;
         }else {
             return true;
@@ -82,7 +93,8 @@ public class Manager {
 
 
 
-    private void evictPage(){
+    private void evictPage(int id){
+
 //        when the buffer manager does not have any more space for new page
 //        this function is called to evict page
 
@@ -96,7 +108,7 @@ public class Manager {
 }
 
 class PageMeta{
-    public int id;
+    public int pId;
     public int pinCounter = 0;
     public boolean dirty = false;
 }
