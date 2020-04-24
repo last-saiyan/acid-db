@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class Tuple {
+public class Tuple implements Iterable<Tuple> {
 
     private HashMap<String, Type> values;
     private byte[] byteTuple;
@@ -71,8 +71,13 @@ public class Tuple {
 
 
 
-    public boolean find(){
+    public boolean search(){
 
         return false;
+    }
+
+    @Override
+    public Iterator<Tuple> iterator() {
+        return null;
     }
 }

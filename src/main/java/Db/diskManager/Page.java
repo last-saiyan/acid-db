@@ -3,12 +3,13 @@ package Db.diskManager;
 import Db.Utils;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
-import Db.iterator.Iterator;
+import Db.catalog.TupleIterator;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
-public class Page implements Utils {
+public class Page implements Utils, Iterable<Tuple> {
 
     public HashMap<String, Integer> pageHeader = new HashMap();
     public byte[] pageData;
@@ -33,13 +34,16 @@ public class Page implements Utils {
 
 
     public void deleteTuple(int id){
+//        test correctly here
 //        improve logic here
         id = id * td.tupleSize();
-        if(id + td.tupleSize() > pageHeader.get("size")){
+        int size = pageHeader.get("size");
+        if(id + td.tupleSize() > size){
             int src =  (id +1) * td.tupleSize();
             int dest = id * td.tupleSize() ;
             int len =  pageData.length - src;
             System.arraycopy(pageData,src,pageData,dest, len);
+            pageHeader.put("size", size -  td.tupleSize());
         }else {
 //
         }
@@ -57,15 +61,13 @@ public class Page implements Utils {
         }
     }
 
-    public void update(){
+    public void update(int id, Tuple tuple){
 
 
     }
 
-    public Iterator<Tuple> iterator(){
-
-
-        return null;
+    public Iterator<Tuple> iterator() {
+        return new TupleIterator(this);
     }
 
 
@@ -80,8 +82,6 @@ public class Page implements Utils {
         }
         return headerByte;
     }
-
-
 
     private HashMap<String, Integer>decodeHeader(byte[] page){
 
