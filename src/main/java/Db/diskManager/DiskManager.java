@@ -46,6 +46,10 @@ public class DiskManager implements Constants {
         return true;
     }
 
+    public boolean writePage(Page page){
+        return writePage(page.getHeader("id"), page.getPageData());
+    }
+
     public byte[] readPage(int id){
         byte[] page = new byte[Utils.pageSize+1];
         try {
