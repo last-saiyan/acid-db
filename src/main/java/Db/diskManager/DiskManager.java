@@ -3,6 +3,7 @@ package Db.diskManager;
 
 import Db.Constants;
 import Db.Utils;
+import Db.catalog.TupleDesc;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -13,10 +14,11 @@ public class DiskManager implements Constants {
     private FileOutputStream writer;
     private FileInputStream reader;
     private RandomAccessFile ffile;
+    private TupleDesc td;
 
-    public DiskManager() throws Exception{
+    public DiskManager(TupleDesc td) throws Exception{
         this.file = new File("../abc.db");
-
+        this.td = td;
         writer = new FileOutputStream(file, true);
         reader = new FileInputStream(file);
         ffile = new RandomAccessFile(file, "rws");
@@ -50,7 +52,7 @@ public class DiskManager implements Constants {
         return writePage(page.getHeader("id"), page.getPageData());
     }
 
-    public byte[] readPage(int id){
+    public Page readPage(int id){
         byte[] page = new byte[Utils.pageSize+1];
         try {
             ffile.seek(id*Utils.pageSize);
@@ -60,7 +62,7 @@ public class DiskManager implements Constants {
             e.printStackTrace();
             return null;
         }
-        return page;
+        return new Page(page,td);
     }
 
 }

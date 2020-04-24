@@ -1,5 +1,6 @@
 package Db.bufferManager;
 
+import Db.catalog.TupleDesc;
 import Db.diskManager.Page;
 import Db.diskManager.DiskManager;
 
@@ -11,9 +12,10 @@ public class Manager {
     private PageMeta[] pageMapping ;
     public int size;
     private Replacer replacer;
+    private DiskManager diskManager;
 
-
-    public Manager(int size){
+    public Manager(int size, TupleDesc td) throws Exception{
+        diskManager = new DiskManager(td);
         bufferPool = new Page[size];
         pageMapping = new PageMeta[size];
         replacer = new Lru(this);
@@ -30,6 +32,7 @@ public class Manager {
     * */
     private void flushPageToDisk(int id){
 //        int pageInd = getPageInd(id);
+        diskManager.writePage(bufferPool[id]);
         pageMapping[id].dirty = false;
         pageMapping[id].pinCounter = 0;
     }
@@ -40,8 +43,7 @@ public class Manager {
     * reads page of given ID from Disk
     * */
     private Page readPageFromDisk(int pageId){
-
-        return null;
+        return diskManager.readPage(pageId);
     }
 
 
