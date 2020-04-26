@@ -1,5 +1,6 @@
 package Db.server;
 
+import Db.catalog.Field;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
 import Db.iterator.Operator;
@@ -13,16 +14,13 @@ public class Predicate {
 
     private String infix;
     private ExpTree tree;
-    private TupleDesc td;
     private HashSet<Character> symbols;
 
     public Predicate(String predStr, TupleDesc td){
-        this.td = td;
         this.infix = predStr;
         ArrayList<String> tokens = tokenize(infix);
-        validateColumns(tokens);
         ArrayList<String> postFix = infixToPostfix(tokens);
-        tree = new ExpTree(postFix);
+        tree = new ExpTree(postFix, td);
     }
 
     private ArrayList<String> tokenize( String exp){
@@ -68,11 +66,6 @@ public class Predicate {
         return tokens;
     }
 
-    private boolean validateColumns(ArrayList<String> token){
-
-        return false;
-    }
-
     public boolean evaluatePredicate (Tuple tuple){
         return tree.evalExp(tuple);
     }
@@ -86,7 +79,7 @@ public class Predicate {
     * != => !
     * == => =
     * */
-    private static int Prec(char ch) {
+    private static int precedence(char ch) {
         switch (ch) {
 
             case '|':
@@ -137,7 +130,7 @@ public class Predicate {
                 }else
                     stack.pop();
             } else{ // an operator is encountered{
-                while (!stack.isEmpty() && Prec(c.charAt(0)) <= Prec(stack.peek().charAt(0))){
+                while (!stack.isEmpty() && precedence(c.charAt(0)) <= precedence(stack.peek().charAt(0))){
                     if(stack.peek().equals("(")) {
                         return null;
 //                      throw error Invalid Expression

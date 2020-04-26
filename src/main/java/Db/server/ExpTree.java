@@ -1,38 +1,123 @@
 package Db.server;
 
+import Db.catalog.Field;
 import Db.catalog.Tuple;
+import Db.catalog.TupleDesc;
 
 import java.util.ArrayList;
+import java.util.EmptyStackException;
+import java.util.HashSet;
+import java.util.Stack;
 
 public class ExpTree {
-    public  Node root;
+    public  Item root;
+    private Stack<Item> itemStack;
+    HashSet<String> fieldNames;
 
-    public ExpTree(ArrayList<String> postFixExp){
+    public ExpTree(ArrayList<String> postFixExp, TupleDesc td){
+        initField(td);
+        buildTree(postFixExp);
+    }
 
+    private void initField(TupleDesc td){
+        fieldNames = new HashSet<>();
+        ArrayList<Field> fields = td.getFieldList();
+        for(int i=0 ; i<fields.size() ; i++){
+            fieldNames.add(fields.get(i).fieldName);
+        }
+    }
 
+    private void buildTree(ArrayList<String> postFixExp){
+        for(int i=0;i<postFixExp.size();i++){
+            String currentToken = postFixExp.get(i);
+            String type = getType(currentToken);
+            Item item = null;
+            if(type == "field"){
+                item = new OperandField(currentToken);
+                itemStack.push(item);
+            }
+            if(type == "integer"||type == "string"){
+                if(type == "string") {
+                    currentToken = currentToken.substring(1, currentToken.length()-1);
+                    item = new OperandValue(currentToken.getBytes());
+                    itemStack.push(item);
+                }else {
+                    item = new OperandValue(currentToken.getBytes());
+                    itemStack.push(item);
+                }
+            }
+
+            if(type == "operator"){
+                Item rootItem = null;
+                try {
+                    rootItem = new Operator(currentToken);
+                    rootItem.right = itemStack.pop();
+                    rootItem.left = itemStack.pop();
+                }catch (EmptyStackException e){
+//                    invalid predicate
+                }
+                itemStack.push(rootItem);
+            }
+        }
+    }
+
+    private String getType(String item){
+        item = item.trim();
+
+//        field
+        if(fieldNames.contains(item)){
+            return "field";
+        }
+
+//        string
+        if(item.charAt(0)=='\'' && item.charAt(item.length()-1) == '\''){
+            return "String";
+        }
+
+//        integer
+        boolean isInt;
+        try{
+            Integer.parseInt(item);
+            isInt = true;
+        }catch (NumberFormatException e){
+            isInt = false;
+        }
+        if(isInt){
+            return "integer";
+        }
+
+//        operator
+        if(item.length() ==1) {
+            char first = item.charAt(0);
+            if (first=='+'||first=='-'||first=='*'||first=='/'){
+                return "operator";
+            }else{
+                return "unknown";
+            }
+        }else {
+            return "unknown";
+        }
     }
 
     public boolean evalExp(Tuple tuple){
+        tuple.getValues();
 
         return true;
     }
 
-    public void addItem(){
-
-    }
-
 }
 
-class Node{
-
-    public Item item;
-    public Node left;
-    public Node right;
-    public Item calculate(){
-
-        return null;
-    }
-}
+//class Node{
+//
+//    public Item item;
+//    public Node left;
+//    public Node right;
+//    public Item calculate(){
+////        do evaluation
+//
+//        return null;
+//    }
+//}
 
 
 abstract class Item{
@@ -40,23 +125,44 @@ abstract class Item{
     public Item(String type){
         this.type = type;
     }
+    public Item left;
+    public Item right;
 }
 
-class operator extends Item{
-    public String name;
-    public operator(String name){
+
+
+class Operator extends Item{
+    public String operatorName;
+    public Operator(String name){
         super("operator");
-        this.name = name;
+        this.operatorName = name;
     }
-    public void evaluate(){
+    public OperandValue evaluate(OperandValue op1, OperandValue op2){
+        switch (operatorName){
+            case "|":
+                return logicalOrExp(op1, op2);
 
+        }
+        return null;
+    }
+    private OperandValue logicalOrExp(OperandValue op1, OperandValue op2){
+        return null;
     }
 
 }
 
-class operand extends Item {
-    public operand (){
-        super("operand");
+class OperandField extends Item{
+    public String fieldName;
+    public OperandField(String fieldName){
+        super("field");
+        this.fieldName = fieldName;
     }
+}
 
+class OperandValue extends Item{
+    public byte[] value;
+    public OperandValue(byte[] value){
+        super("value");
+        this.value = value;
+    }
 }

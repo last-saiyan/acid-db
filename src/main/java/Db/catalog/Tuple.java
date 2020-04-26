@@ -15,6 +15,10 @@ public class Tuple implements Iterable<Tuple> {
         return byteTuple;
     }
 
+    public HashMap<String, Type> getValues(){
+        return values;
+    }
+
     public Tuple(byte[] byteTuple, TupleDesc tDesc){
         this.byteTuple = byteTuple;
         this.values = decodeTupleToMap(tDesc, byteTuple);
@@ -32,7 +36,7 @@ public class Tuple implements Iterable<Tuple> {
 
 
 
-    public byte[] encodeTupleToByte(HashMap<String, Type> values){
+    private byte[] encodeTupleToByte(HashMap<String, Type> values){
         int size = 0;
         for(Map.Entry<String, Type> entry: values.entrySet()){
             size = size + entry.getValue().size;
@@ -49,7 +53,7 @@ public class Tuple implements Iterable<Tuple> {
 
 
 
-    public HashMap<String, Type> decodeTupleToMap(TupleDesc tDesc, byte[] byteTuple) {
+    private HashMap<String, Type> decodeTupleToMap(TupleDesc tDesc, byte[] byteTuple) {
         Iterator<Field> iter = tDesc.open();
         Field tempField;
         byte[] tempByte ;
@@ -71,9 +75,12 @@ public class Tuple implements Iterable<Tuple> {
 
 
 
-    public boolean search(){
-
-        return false;
+    public byte[] getValue(String fieldName){
+        if(values.containsKey(fieldName)){
+            return values.get(fieldName).getValue();
+        }else {
+            return null;
+        }
     }
 
     @Override
