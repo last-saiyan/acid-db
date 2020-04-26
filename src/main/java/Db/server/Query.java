@@ -14,6 +14,7 @@ public class Query {
         Gson gson = new Gson();
         try {
             gson.fromJson(jsonString, Object.class);
+
             return true;
         }catch (com.google.gson.JsonSyntaxException e){
             return false;
