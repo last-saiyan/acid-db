@@ -100,25 +100,31 @@ public class ExpTree {
     }
 
     public boolean evalExp(Tuple tuple){
-        tuple.getValues();
 
-        return true;
+        OperandValue value = evalTree(root, tuple);
+
+        return false;
+    }
+    private OperandValue evalTree(Item root, Tuple tuple){
+        if(root instanceof OperandField){
+            return ((OperandField) root).convertFieldToValue(tuple);
+        }
+        if(root instanceof OperandValue){
+            return (OperandValue) root;
+        }
+        Item left = root.left;
+        Item right = root.right;
+        if(!(left instanceof OperandValue)){
+            left = evalTree(left, tuple);
+        }
+        if(!(right instanceof OperandValue)){
+            right = evalTree(right, tuple);
+        }
+        Operator operator = (Operator) root;
+        return operator.evaluate((OperandValue)left, (OperandValue)right);
     }
 
 }
-
-//class Node{
-//
-//    public Item item;
-//    public Node left;
-//    public Node right;
-//    public Item calculate(){
-////        do evaluation
-//
-//        return null;
-//    }
-//}
-
 
 abstract class Item{
     public String type;
@@ -143,10 +149,35 @@ class Operator extends Item{
                 return logicalOrExp(op1, op2);
 
         }
+//        throw unknown operator error
         return null;
     }
-    private OperandValue logicalOrExp(OperandValue op1, OperandValue op2){
+    private OperandValue logicalOrExp(OperandValue left, OperandValue right){
+        byte[] leftValue = left.value;
+        byte[] rightValue = right.value;
+
+        if(left.value.length==1 && right.value.length==1){
+            if(left.value[0] == 1 || right.value[0] == 1){
+                byte[] temp = {1};
+                return new OperandValue(temp);
+            }else {
+                byte[] temp = {0};
+                return new OperandValue(temp);
+            }
+        }else {
+//            error?
+        }
+
         return null;
+    }
+    private OperandValue equalOperator(OperandValue left, OperandValue right){
+        if(left.value == right.value){
+            byte[] temp = {1};
+            return new OperandValue(temp);
+        }else {
+            byte[] temp = {0};
+            return new OperandValue(temp);
+        }
     }
 
 }
@@ -156,6 +187,9 @@ class OperandField extends Item{
     public OperandField(String fieldName){
         super("field");
         this.fieldName = fieldName;
+    }
+    public OperandValue convertFieldToValue(Tuple tuple){
+        return new OperandValue(tuple.getValue(fieldName));
     }
 }
 
