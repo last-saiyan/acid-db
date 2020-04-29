@@ -12,20 +12,13 @@ import java.util.Stack;
 public class ExpTree {
     public  Item root;
     private Stack<Item> itemStack;
-    HashSet<String> fieldNames;
+    private TupleDesc td;
 
     public ExpTree(ArrayList<String> postFixExp, TupleDesc td){
-        initField(td);
+        this.td = td;
         buildTree(postFixExp);
     }
 
-    private void initField(TupleDesc td){
-        fieldNames = new HashSet<>();
-        ArrayList<Field> fields = td.getFieldList();
-        for(int i=0 ; i<fields.size() ; i++){
-            fieldNames.add(fields.get(i).fieldName);
-        }
-    }
 
     private void buildTree(ArrayList<String> postFixExp){
         for(int i=0;i<postFixExp.size();i++){
@@ -65,7 +58,7 @@ public class ExpTree {
         item = item.trim();
 
 //        field
-        if(fieldNames.contains(item)){
+        if(td.getFieldMap().containsKey(item)){
             return "field";
         }
 

@@ -1,10 +1,7 @@
 package Db.server;
 
-import Db.catalog.Field;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
-import Db.iterator.Operator;
-import sun.jvm.hotspot.asm.Operand;
 
 import java.util.ArrayList;
 import java.util.HashSet;
