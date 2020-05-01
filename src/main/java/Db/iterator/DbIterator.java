@@ -1,15 +1,15 @@
 package Db.iterator;
 
-import Db.Tuples.Tuple;
+import Db.catalog.Tuple;
 
-public interface Iterator {
+public interface DbIterator {
     int  index = 0;
 
     public void open();
 
     public void close();
 
-    public Object next();
+    public Tuple next();
 
     public boolean hasNext();
 

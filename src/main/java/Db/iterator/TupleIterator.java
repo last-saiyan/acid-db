@@ -1,36 +1,67 @@
 package Db.iterator;
 
-import Db.Page;
+import Db.diskManager.Page;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
 
 
-public class TupleIterator implements Iterator{
+public class TupleIterator implements DbIterator {
 
     private Page page;
-    private int index;
+    private int tupleIndex;
     private TupleDesc tDesc;
+    private HeapFileIterator pageIterator;
 
-    public TupleIterator(Page page, TupleDesc tDesc){
-        this.page = page;
+    public TupleIterator(HeapFileIterator pageIterator, TupleDesc tDesc){
+        this.pageIterator = pageIterator;
         this.tDesc = tDesc;
-        int index = 0;
+
     }
 
     @Override
     public void open(){
-
+        this.page = pageIterator.getNextPage();
+        tupleIndex = 0;
     }
 
+    public void delete(int id){
+        page.deleteTuple(id);
+    }
+
+    public void insert(Tuple tuple){
+        page.insertTuple(tuple);
+    }
+
+    /*
+    *
+    * the tuple is calculated by merging the current value
+    * with the updated value
+    * */
+    public void update(int id, Tuple tuple){
+        delete(id);
+        insert(tuple);
+    }
+
+    /*
+    * checks if index is less than page size
+    * if no more tuples in current page
+    * gets new page from pageIterator
+    * */
     @Override
     public boolean hasNext(){
         int pageSize = page.getHeader("size");
         if(index<pageSize){
             return true;
         }else{
-            return false;
+            if(pageIterator.hasNext()){
+                 page = pageIterator.getNextPage();
+                 return true;
+            }else {
+                return false;
+            }
         }
     }
+
 
     @Override
     public Tuple next(){
@@ -40,7 +71,7 @@ public class TupleIterator implements Iterator{
             byte[] tupleByte = new byte[tDesc.tupleSize()];
             System.arraycopy(page.pageData,offset,tupleByte,0,tDesc.tupleSize());
 
-            return new Tuple(tupleByte);
+            return new Tuple(tupleByte, tDesc);
         }else{
 
 //            throw exception

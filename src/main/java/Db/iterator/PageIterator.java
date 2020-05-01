@@ -4,7 +4,7 @@ import Db.Page;
 import Db.bufferManager.Manager;
 
 
-public class PageIterator implements Iterator {
+public class PageIterator implements DbIterator {
 
 
     public PageIterator(Manager bm){
