@@ -3,7 +3,7 @@ package Db.iterator;
 import Db.catalog.Tuple;
 
 public interface DbIterator {
-    int  index = 0;
+
 
     public void open();
 

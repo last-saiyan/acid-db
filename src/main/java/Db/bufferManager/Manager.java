@@ -1,5 +1,6 @@
 package Db.bufferManager;
 
+import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
 import Db.diskManager.Page;
 import Db.diskManager.DiskManager;
@@ -81,6 +82,12 @@ public class Manager {
                 return victimID;
             }
         }
+    }
+
+    public void insertTuple(Tuple tuple){
+//        insert this into any page that has space in bufferpool
+
+
     }
 
 

@@ -1,6 +1,6 @@
 package Db.iterator;
 
-import Db.Tuples.Tuple;
+import Db.catalog.Tuple;
 
 public class Deletion extends Operator {
     private DbIterator child;
@@ -21,13 +21,17 @@ public class Deletion extends Operator {
     }
 
     @Override
-    public Tuple next() {
-
+    public Tuple fetchNext() {
+        if(child.hasNext()) {
+            Tuple temp = child.next();
+            ((TupleIterator) child).delete();
+            return temp;
+        }
         return null;
     }
 
     @Override
     public boolean hasNext() {
-        return false;
+        return child.hasNext();
     }
 }

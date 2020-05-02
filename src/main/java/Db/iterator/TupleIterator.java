@@ -15,7 +15,6 @@ public class TupleIterator implements DbIterator {
     public TupleIterator(HeapFileIterator pageIterator, TupleDesc tDesc){
         this.pageIterator = pageIterator;
         this.tDesc = tDesc;
-
     }
 
     @Override
@@ -24,8 +23,8 @@ public class TupleIterator implements DbIterator {
         tupleIndex = 0;
     }
 
-    public void delete(int id){
-        page.deleteTuple(id);
+    public void delete(){
+        page.deleteTuple(tupleIndex);
     }
 
     public void insert(Tuple tuple){
@@ -37,8 +36,8 @@ public class TupleIterator implements DbIterator {
     * the tuple is calculated by merging the current value
     * with the updated value
     * */
-    public void update(int id, Tuple tuple){
-        delete(id);
+    public void update( Tuple tuple){
+        delete();
         insert(tuple);
     }
 
@@ -50,7 +49,7 @@ public class TupleIterator implements DbIterator {
     @Override
     public boolean hasNext(){
         int pageSize = page.getHeader("size");
-        if(index<pageSize){
+        if(tupleIndex<pageSize){
             return true;
         }else{
             if(pageIterator.hasNext()){
@@ -67,10 +66,10 @@ public class TupleIterator implements DbIterator {
     public Tuple next(){
 
         if(hasNext()){
-            int offset = index*tDesc.tupleSize();
+            int offset = tupleIndex*tDesc.tupleSize();
             byte[] tupleByte = new byte[tDesc.tupleSize()];
             System.arraycopy(page.pageData,offset,tupleByte,0,tDesc.tupleSize());
-
+            tupleIndex++;
             return new Tuple(tupleByte, tDesc);
         }else{
 
@@ -84,7 +83,8 @@ public class TupleIterator implements DbIterator {
 
     @Override
     public void close(){
-
+        tupleIndex = 0;
+        pageIterator.close();
     }
 
 }

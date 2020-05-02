@@ -1,16 +1,41 @@
 package Db.iterator;
 
-import Db.Tuples.Tuple;
+import Db.catalog.Tuple;
+
+import java.util.NoSuchElementException;
 
 public abstract  class Operator implements DbIterator {
+    private  Tuple currentTuple;
 
-    public void open();
 
-    public void close();
+    public abstract void open();
 
-    public Tuple next();
+    public abstract void close();
 
-    public boolean hasNext();
+    public Tuple next(){
+        if(currentTuple == null) {
+            currentTuple = fetchNext();
+            if(currentTuple == null){
+                throw new NoSuchElementException();
+            }
+        }
+        Tuple tempTuple = currentTuple;
+        currentTuple = null;
+        return tempTuple;
+    }
+
+    public  boolean hasNext(){
+        if(currentTuple == null){
+            currentTuple = next();
+        }
+        if(currentTuple== null){
+            return false;
+        }else {
+            return true;
+        }
+    }
+    protected abstract Tuple fetchNext();
+
 
 
 }

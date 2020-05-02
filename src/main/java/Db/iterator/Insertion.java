@@ -1,15 +1,17 @@
 package Db.iterator;
 
-import Db.Tuples.Tuple;
+import Db.bufferManager.Manager;
+import Db.catalog.Tuple;
 
 public class Insertion extends Operator {
 
     private Tuple data;
     private DbIterator child;
+    private Manager bfPool;
 
-    public Insertion(DbIterator child, Tuple data){
+    public Insertion(DbIterator child, Manager bfPool){
         this.child = child;
-        this.data = data;
+        this.bfPool = bfPool;
     }
 
 
@@ -24,14 +26,12 @@ public class Insertion extends Operator {
     }
 
     @Override
-    public Tuple next() {
-
-
+    protected Tuple fetchNext() {
+        if(child.hasNext()){
+            Tuple tuple = child.next();
+            bfPool.insertTuple(tuple);
+            return tuple;
+        }
         return null;
-    }
-
-    @Override
-    public boolean hasNext() {
-        return (child.hasNext());
     }
 }

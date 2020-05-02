@@ -26,6 +26,10 @@ public class HeapFileIterator {
         return false;
     }
 
+    public void close(){
+        pageCount = 0;
+    }
+
 
     public Page getNextPage(){
         return bfPoolManager.getPage(pageCount);
