@@ -33,14 +33,14 @@ public class WorkerRunnable implements Runnable {
                 queryString = queryString + tempString;
 
 
-                    if(Query.isValid(queryString)){
-                        Query query = gson.fromJson(queryString, Query.class);
-
-                        System.out.println(query.columns);
-                        System.out.println(query.columns);
-                    }else{
-                        System.out.println("type");
-                    }
+//                    if(Query.isValid(queryString)){
+//                        Query query = gson.fromJson(queryString, Query.class);
+//
+//                        System.out.println(query.columns);
+//                        System.out.println(query.columns);
+//                    }else{
+//                        System.out.println("type");
+//                    }
 
 
 

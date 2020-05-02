@@ -1,5 +1,6 @@
-package Db.server;
+package Db.Query;
 
+import Db.Query.ExpTree;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
 

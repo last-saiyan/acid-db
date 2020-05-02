@@ -9,9 +9,10 @@ public class Projection extends Operator {
     private DbIterator child;
     private ArrayList<Field> outputFieldList;
 
-    public Projection(DbIterator child, ArrayList<Field> outputFieldList){
+    public Projection(DbIterator child, ArrayList<String> outputFieldList){
+
         this.child = child;
-        this.outputFieldList = outputFieldList;
+        this.outputFieldList = null;
     }
 
     @Override

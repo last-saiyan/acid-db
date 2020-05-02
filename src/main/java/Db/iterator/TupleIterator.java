@@ -1,5 +1,6 @@
 package Db.iterator;
 
+import Db.Query.Predicate;
 import Db.diskManager.Page;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
@@ -12,9 +13,10 @@ public class TupleIterator implements DbIterator {
     private TupleDesc tDesc;
     private HeapFileIterator pageIterator;
 
-    public TupleIterator(HeapFileIterator pageIterator, TupleDesc tDesc){
+    public TupleIterator(HeapFileIterator pageIterator, Predicate predicate){
         this.pageIterator = pageIterator;
-        this.tDesc = tDesc;
+//        initilize this from a static class
+        this.tDesc = null;
     }
 
     @Override

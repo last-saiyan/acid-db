@@ -1,12 +1,10 @@
-package Db.server;
+package Db.Query;
 
-import Db.catalog.Field;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
 
 import java.util.ArrayList;
 import java.util.EmptyStackException;
-import java.util.HashSet;
 import java.util.Stack;
 
 public class ExpTree {

@@ -47,6 +47,21 @@
     ]
   },
 
+  {
+    "type": "create",
+
+    "values": [
+      {
+        "colName" :"column1",
+        "value": "column type"
+      },
+      {
+        "colName":"column2",
+        "value": "column type"
+      }
+    ]
+  },
+
 
 
   {
