@@ -1,7 +1,8 @@
 package Db.bufferManager;
 
+import Db.Acid;
+import Db.Utils;
 import Db.catalog.Tuple;
-import Db.catalog.TupleDesc;
 import Db.diskManager.Page;
 import Db.diskManager.DiskManager;
 
@@ -15,12 +16,12 @@ public class Manager {
     private Replacer replacer;
     private DiskManager diskManager;
 
-    public Manager(int size, TupleDesc td) throws Exception{
-        diskManager = new DiskManager(td);
+    public Manager(Acid db) throws Exception{
+        diskManager = db.diskManager;
+        replacer = new Lru(this);
+        this.size = Utils.bfPoolsize;
         bufferPool = new Page[size];
         pageMapping = new PageMeta[size];
-        replacer = new Lru(this);
-        this.size = size;
         for(int i=0;i<size;i++){
             pageMapping[i] = new PageMeta();
         }
@@ -49,9 +50,10 @@ public class Manager {
 
 
     /*
-    * this gets called when a query needs to use a page
+    * this gets called when a query
+    *  needs to use a page using getPage(int id)
     * pinned pages cant be evicted
-    * check the pagemapping if the page is in bufferpool
+    * check the pageMapping if the page is in bufferPool
     * else get from disk
     * */
     public int pinPage(int pId){
@@ -84,9 +86,56 @@ public class Manager {
         }
     }
 
-    public void insertTuple(Tuple tuple){
-//        insert this into any page that has space in bufferpool
+    /*
+    * a record can be inserted into any page
+    * that has memory
+    * search buffer pool for page with empty slot
+    * if none is found create a new page (need think about this)
+    *
+    * */
 
+    public void insertTuple(Tuple tuple){
+        int i = 0;
+        Page temp = bufferPool[0];
+        boolean found = false;
+        while (i < bufferPool.length){
+            if(temp.pageDataCapacity < tuple.size() + temp.pageSize()){
+                found = true;
+                break;
+            }
+            i++;
+            temp = bufferPool[i];
+        }
+        if(found == true){
+            temp = bufferPool[i];
+        }else {
+            temp = insertNewPage();
+        }
+        temp.insertTuple(tuple);
+
+    }
+
+
+
+    /*
+    * creates new page adds it into bufferPool
+    * throws exception when there is no memory
+    * in the bufferPool (all pages are filled)
+    *
+    * */
+    public Page insertNewPage(){
+
+        int buffPoolInd = replacer.pickVictim();
+        if(buffPoolInd == -1){
+//            throw exception
+        }
+
+        if(pageMapping[buffPoolInd].dirty){
+            flushPageToDisk(buffPoolInd);
+            return bufferPool[buffPoolInd];
+        }else{
+            return bufferPool[buffPoolInd];
+        }
 
     }
 
@@ -94,6 +143,11 @@ public class Manager {
     /*
     *
     * returns a page
+    * with the given page ID
+    * checks if its in the bufferpool
+    * else tries to fetch the page from disk
+    * if all pages in bufferpool is pinned
+    * it throws a exception
     * */
     public Page getPage(int pId){
         int bufferPoolInd = pinPage(pId);
@@ -113,6 +167,11 @@ public class Manager {
         }
     }
 
+    /*
+    * for a page with given page id
+    * it returns the position
+    * of the page in bufferPool
+    * */
     private int getBufferPoolPageInd(int pId){
         for(int i=0;i<pageMapping.length;i++){
             if(pId == pageMapping[i].pId)

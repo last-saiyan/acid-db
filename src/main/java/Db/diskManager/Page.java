@@ -14,14 +14,21 @@ public class Page implements Utils, Iterable<Tuple> {
     public HashMap<String, Integer> pageHeader = new HashMap();
     public byte[] pageData;
     public TupleDesc td;
+    public int pageDataCapacity;
 
+    /*
+    * header should be encoded and decoded in the same order
+    *
+    * */
 
     public Page(int id, TupleDesc td){
+
         pageHeader.put("id",id);
         pageHeader.put("size",0);
 //        calculate capacity of page based on size of one record, each record is fixed len
         pageHeader.put("capacity",100);
         pageData = new byte[Utils.pageSize - pageHeader.size()*4];
+        pageDataCapacity = Utils.pageSize - pageHeader.size()*4;
         this.td = td;
     }
 
@@ -52,7 +59,7 @@ public class Page implements Utils, Iterable<Tuple> {
 
     public boolean insertTuple(Tuple tuple){
         int size = pageHeader.get("size");
-        if(tuple.size() + size < pageData.length){
+        if(tuple.size() + size < pageDataCapacity){
             System.arraycopy(tuple.getBytes(),0, pageData, size, tuple.size());
             pageHeader.put("size", tuple.size() + size);
             return true;
@@ -61,9 +68,10 @@ public class Page implements Utils, Iterable<Tuple> {
         }
     }
 
+
     public void update(int id, Tuple tuple){
-
-
+        deleteTuple(id);
+        insertTuple(tuple);
     }
 
     public Iterator<Tuple> iterator() {
@@ -83,6 +91,11 @@ public class Page implements Utils, Iterable<Tuple> {
         return headerByte;
     }
 
+    /*
+    * items in the header should be encoded and decoded
+    * in the same order
+    *
+    * */
     private HashMap<String, Integer>decodeHeader(byte[] page){
 
         HashMap<String,Integer> header = new HashMap();
@@ -101,9 +114,10 @@ public class Page implements Utils, Iterable<Tuple> {
          return this.pageHeader.get(headerName);
     }
 
-    public int getHeaderSize(){
-        return pageHeader.size();
+    public int pageSize(){
+        return getHeader("size");
     }
+
 
 
     public byte[] getPageData(){

@@ -1,6 +1,7 @@
 package Db.diskManager;
 
 
+import Db.Acid;
 import Db.Constants;
 import Db.Utils;
 import Db.catalog.TupleDesc;
@@ -11,19 +12,25 @@ import java.nio.channels.FileChannel;
 
 public class DiskManager implements Constants {
     private File file;
-    private FileOutputStream writer;
-    private FileInputStream reader;
-    private RandomAccessFile ffile;
+    RandomAccessFile ffile;
     private TupleDesc td;
+    private Acid db;
 
-    public DiskManager(TupleDesc td) throws Exception{
-        this.file = new File("../abc.db");
+    public DiskManager(String path,  TupleDesc td) throws FileNotFoundException{
+        this.file = new File(path);
         this.td = td;
-        writer = new FileOutputStream(file, true);
-        reader = new FileInputStream(file);
         ffile = new RandomAccessFile(file, "rws");
     }
 
+    public DiskManager(Acid db) {
+        this.db = db;
+
+    }
+
+    public void createDatabase(String file) throws FileNotFoundException {
+        this.file = new File(file);
+        ffile = new RandomAccessFile(this.file, "rws");
+    }
 
     private static int startRange(int id){
         int pageSize = Constants.pageSize;
