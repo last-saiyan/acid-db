@@ -2,30 +2,27 @@ package Db.catalog;
 
 import Db.Utils;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
-public class Tuple implements Iterable<Tuple> {
+public class Tuple {
 
-    private HashMap<String, Type> values;
+    private HashMap<String, Value> fieldValuesMap;
     private byte[] byteTuple;
-
+    private TupleDesc tupleDesc;
     public byte[] getBytes(){
         return byteTuple;
     }
 
-    public HashMap<String, Type> getValues(){
-        return values;
-    }
 
     public Tuple(byte[] byteTuple, TupleDesc tDesc){
         this.byteTuple = byteTuple;
-        this.values = decodeTupleToMap(tDesc, byteTuple);
+        this.fieldValuesMap = decodeTupleToMap(tDesc, byteTuple);
+        this.tupleDesc = tDesc;
     }
 
-    public Tuple(HashMap<String, Type> values){
-        this.values = values;
+
+    public Tuple(HashMap<String, Value> values){
+        this.fieldValuesMap = values;
         this.byteTuple = encodeTupleToByte(values);
     }
 
@@ -34,16 +31,18 @@ public class Tuple implements Iterable<Tuple> {
         return byteTuple.length;
     }
 
+    public HashMap<String, Value> getMapValue(){
+        return fieldValuesMap;
+    }
 
-
-    private byte[] encodeTupleToByte(HashMap<String, Type> values){
+    private byte[] encodeTupleToByte(HashMap<String, Value> values){
         int size = 0;
-        for(Map.Entry<String, Type> entry: values.entrySet()){
+        for(Map.Entry<String, Value> entry: values.entrySet()){
             size = size + entry.getValue().size;
         }
         byte [] byteTuple = new byte[size];
         int pos = 0;
-        for(Map.Entry<String, Type> entry: values.entrySet()){
+        for(Map.Entry<String, Value> entry: values.entrySet()){
             byte[] temp =  entry.getValue().getValue();
             System.arraycopy(temp,0,byteTuple, pos, temp.length);
            pos = pos + temp.length;
@@ -53,7 +52,7 @@ public class Tuple implements Iterable<Tuple> {
 
 
 
-    private HashMap<String, Type> decodeTupleToMap(TupleDesc tDesc, byte[] byteTuple) {
+    private HashMap<String, Value> decodeTupleToMap(TupleDesc tDesc, byte[] byteTuple) {
         Iterator<Field> iter = tDesc.open();
         Field tempField;
         byte[] tempByte ;
@@ -61,12 +60,12 @@ public class Tuple implements Iterable<Tuple> {
         while (iter.hasNext()){
             tempField = iter.next();
             tempByte = new byte[tempField.getSize()];
-            if(tempField.type.equals("STR")){
+            if(tempField.typesEnum == TypesEnum.STRING){
                 System.arraycopy(byteTuple,index,tempByte,0,tempByte.length);
-                values.put(tempField.fieldName, new StringType(tempByte));
-            }else if(tempField.type.equals("INT")){
+                fieldValuesMap.put(tempField.fieldName, new StringValue(tempByte));
+            }else if(tempField.typesEnum == TypesEnum.INTEGER){
                 System.arraycopy(byteTuple,index,tempByte,0,tempByte.length);
-                values.put(tempField.fieldName, new IntType(tempByte));
+                fieldValuesMap.put(tempField.fieldName, new IntValue(tempByte));
             }
             index = index + tempField.getSize();
         }
@@ -76,15 +75,32 @@ public class Tuple implements Iterable<Tuple> {
 
 
     public byte[] getValue(String fieldName){
-        if(values.containsKey(fieldName)){
-            return values.get(fieldName).getValue();
+        if(fieldValuesMap.containsKey(fieldName)){
+            return fieldValuesMap.get(fieldName).getValue();
         }else {
             return null;
         }
     }
 
-    @Override
-    public Iterator<Tuple> iterator() {
-        return null;
+
+    public String toString(){
+        String tupleString = "";
+
+        ArrayList<Field> fieldListList = tupleDesc.getFieldList();
+        fieldListList.sort(new Comparator<Field>() {
+            @Override
+            public int compare(Field o1, Field o2) {
+                return o1.id - o2.id;
+            }
+        });
+        for(int i=0; i<fieldListList.size(); i++){
+            Field field = fieldListList.get(i);
+            tupleString += field.fieldName + " - ";
+            
+            tupleString += fieldValuesMap.get(field.fieldName).toString();
+        }
+        return tupleString;
     }
+
+
 }
