@@ -16,27 +16,39 @@ public class DiskManager implements Constants {
     private TupleDesc td;
     private Acid db;
 
+
     public DiskManager(String path,  TupleDesc td) throws FileNotFoundException{
         this.file = new File(path);
         this.td = td;
         ffile = new RandomAccessFile(file, "rws");
     }
 
+
     public DiskManager(Acid db) {
         this.db = db;
 
     }
+
+
+    public boolean databaseExist(){
+
+
+        return false;
+    }
+
 
     public void createDatabase(String file) throws FileNotFoundException {
         this.file = new File(file);
         ffile = new RandomAccessFile(this.file, "rws");
     }
 
+
     private static int startRange(int id){
         int pageSize = Constants.pageSize;
         int start = pageSize + pageSize*id +1;
         return start;
     }
+
 
     private static int endRange(int startRange){
         return startRange + Constants.pageSize;
@@ -55,9 +67,11 @@ public class DiskManager implements Constants {
         return true;
     }
 
+
     public boolean writePage(Page page){
         return writePage(page.getHeader("id"), page.getPageData());
     }
+
 
     public Page readPage(int id){
         byte[] page = new byte[Utils.pageSize+1];

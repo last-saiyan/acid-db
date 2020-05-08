@@ -39,6 +39,8 @@ public class Query {
 
 
         switch (query.type){
+            case "init":
+                return validateInit(query);
             case "select":
                 return validateSelect(query);
             case "update":
@@ -52,6 +54,9 @@ public class Query {
         return false;
     }
 
+    private boolean validateInit(QueryMapper query){
+        return false;
+    }
     private boolean validateSelect(QueryMapper query){
         return false;
     }

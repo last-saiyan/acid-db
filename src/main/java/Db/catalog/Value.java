@@ -1,6 +1,7 @@
 package Db.catalog;
 
 public abstract class Value<variableType> {
+//    research about factory design pattern
 
     public final TypesEnum type;
     public final int size;

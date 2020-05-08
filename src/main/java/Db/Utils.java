@@ -11,6 +11,8 @@ public interface Utils {
 
     public int bfPoolsize = 100;
 
+    public int port = 8081;
+
     public static byte[] stringToByte(String str, int bytes){
         // does this support other encoding?
         byte [] value = str.getBytes(StandardCharsets.US_ASCII);

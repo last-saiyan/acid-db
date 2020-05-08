@@ -1,5 +1,8 @@
 package Db.server;
 
+import Db.Query.Executor;
+import Db.Query.Planner;
+import Db.Query.Query;
 import com.google.gson.Gson;
 
 import java.io.*;
@@ -16,7 +19,6 @@ public class WorkerRunnable implements Runnable {
 
     @Override
     public void run() {
-        Gson gson = new Gson();
         try {
             InputStream input  = clientSocket.getInputStream();
             OutputStream output = clientSocket.getOutputStream();
@@ -28,31 +30,22 @@ public class WorkerRunnable implements Runnable {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(input), 1024);
 
             String queryString = "";
-            String tempString = null;
+            String tempString ;
             while((tempString = bufferedReader.readLine()) != null){
+                tempString = tempString.trim();
+
                 queryString = queryString + tempString;
+                if(tempString.charAt(tempString.length()-1) == ';'){
+                    Query query = new Query(queryString);
 
+                    Planner planner = new Planner(query.getQuery(), query.getPredicate());
 
-//                    if(Query.isValid(queryString)){
-//                        Query query = gson.fromJson(queryString, Query.class);
-//
-//                        System.out.println(query.columns);
-//                        System.out.println(query.columns);
-//                    }else{
-//                        System.out.println("type");
-//                    }
+                    Executor executor = new Executor(planner.getplan(), output);
 
+                    executor.run();
 
-
-                if(tempString.equals('\n')){
-                    System.out.println("enter");
                 }
 
-                System.out.println(tempString);
-
-                if(clientSocket.isClosed()){
-                    System.out.println("closed");
-                }
             }
             System.out.println("connection closed");
 

@@ -8,9 +8,10 @@ package Db;
 import Db.bufferManager.Manager;
 import Db.catalog.TupleDesc;
 import Db.diskManager.DiskManager;
-import Db.diskManager.Page;
 
-import java.security.PublicKey;
+import Db.diskManager.Page;
+import Db.server.Server;
+
 
 public class Acid implements Utils{
 
@@ -19,18 +20,25 @@ public class Acid implements Utils{
      public TupleDesc tupleDesc;
      static Acid database;
      public String dbFile;
+     public Server server;
 
      private Acid() throws Exception {
 
          bufferPoolManager = new Manager(this);
          diskManager = new DiskManager(null);
-     }
-
-     void init() {
+         server = new Server(Utils.port);
 
      }
+
 
      void run() {
+         server.run();
+
+
+     }
+
+     void stop(){
+         server.stop();
 
      }
 

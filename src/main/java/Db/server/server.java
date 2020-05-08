@@ -20,9 +20,7 @@ public class Server implements Runnable{
     }
 
     public void run(){
-//        synchronized(this){
-//            this.runningThread = Thread.currentThread();
-//        }
+
         openServerSocket();
         while(true){
             if(isStopped){
@@ -32,10 +30,6 @@ public class Server implements Runnable{
             try {
                 clientSocket = this.serverSocket.accept();
             } catch (IOException e) {
-//                if(isStopped()) {
-//                    System.out.println("Server Stopped.") ;
-//                    break;
-//                }
                 throw new RuntimeException("Error accepting client connection", e);
             }
             this.threadPool.execute(new WorkerRunnable(clientSocket));
@@ -45,9 +39,6 @@ public class Server implements Runnable{
     }
 
 
-//    private synchronized boolean isStopped() {
-//        return this.isStopped;
-//    }
 
     public synchronized void stop(){
         this.isStopped = true;

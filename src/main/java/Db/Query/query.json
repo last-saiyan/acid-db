@@ -17,6 +17,11 @@
   },
 
   {
+    "type": "init",
+    "database": "dbname"
+  },
+
+  {
     "type": "update",
 
     "where": "a>5",
@@ -49,7 +54,7 @@
 
   {
     "type": "create",
-
+    "database": "dbname",
     "values": [
       {
         "colName" :"column1",
