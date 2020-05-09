@@ -19,10 +19,11 @@ public class Acid implements Utils{
      public DiskManager diskManager;
      public TupleDesc tupleDesc;
      static Acid database;
-     public String dbFile;
+     public String dbFolderPath;
+     public String dbName;
      public Server server;
 
-     private Acid() throws Exception {
+     private Acid()  {
 
          bufferPoolManager = new Manager(this);
          diskManager = new DiskManager(null);
@@ -33,8 +34,7 @@ public class Acid implements Utils{
 
      void run() {
          server.run();
-
-
+         diskManager.setDbFolder(Utils.dbFolderPath);
      }
 
      void stop(){
@@ -42,7 +42,11 @@ public class Acid implements Utils{
 
      }
 
-     static Acid getDatabase() throws Exception {
+     public void setTupleDesc(TupleDesc td){
+         this.tupleDesc = td;
+     }
+
+     public static Acid getDatabase() {
          if(database!= null) {
              return database;
          }else {

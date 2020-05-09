@@ -10,7 +10,7 @@ public class QueryMapper {
 
     public ArrayList<String> columns;
 
-    public ArrayList<Value> values;
+    public ArrayList<ColValue> values;
 
     public String where;
 

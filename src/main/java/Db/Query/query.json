@@ -52,17 +52,18 @@
     ]
   },
 
+
   {
     "type": "create",
     "database": "dbname",
     "values": [
       {
         "colName" :"column1",
-        "value": "column type"
+        "value": "column type -> string 23"
       },
       {
         "colName":"column2",
-        "value": "column type"
+        "value": "column type -> int"
       }
     ]
   },

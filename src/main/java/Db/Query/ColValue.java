@@ -1,6 +1,6 @@
 package Db.Query;
 
-public class Value {
+public class ColValue {
 
     String colName;
     String value;

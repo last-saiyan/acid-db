@@ -20,10 +20,13 @@ public class Query {
         if(!validateQuery(query)){
 //            throw exception
         }
+
         TupleDesc tupleDesc = null;
         predicate = new Predicate(query.where, tupleDesc);
 
     }
+
+
 
 
     public QueryMapper getQuery(){

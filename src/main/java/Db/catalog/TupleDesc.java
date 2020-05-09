@@ -7,11 +7,12 @@ package Db.catalog;
 *
 * */
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class TupleDesc {
+public class TupleDesc implements Serializable {
     private ArrayList<Field> fieldList;
     private HashMap<String, Field> fieldHashMap;
 
@@ -23,6 +24,22 @@ public class TupleDesc {
         for(int i=0;i<fieldList.size() ; i++){
             fieldHashMap.put(fieldList.get(i).fieldName, fieldList.get(i));
         }
+    }
+
+    public void serializeToDisk(String catalogFilePath) throws IOException {
+
+        String filepath = catalogFilePath;
+        FileOutputStream fileOut = new FileOutputStream(filepath);
+        ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+        objectOut.writeObject(this);
+        objectOut.close();
+    }
+
+    public static TupleDesc deSerializeFromDisk (String catalogFilePath) throws IOException, ClassNotFoundException {
+        String filepath = catalogFilePath;
+        FileInputStream fileIn = new FileInputStream(filepath);
+        ObjectInputStream objectinputstream = new ObjectInputStream(fileIn);
+        return (TupleDesc) objectinputstream.readObject();
     }
 
     public int tupleSize(){
@@ -44,6 +61,7 @@ public class TupleDesc {
     public HashMap<String , Field> getFieldMap(){
         return fieldHashMap;
     }
+
 
 
 

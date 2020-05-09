@@ -1,9 +1,10 @@
 package Db.server;
 
+import Db.Acid;
 import Db.Query.Executor;
 import Db.Query.Planner;
 import Db.Query.Query;
-import com.google.gson.Gson;
+import Db.diskManager.DiskManager;
 
 import java.io.*;
 import java.net.Socket;
@@ -37,6 +38,14 @@ public class WorkerRunnable implements Runnable {
                 queryString = queryString + tempString;
                 if(tempString.charAt(tempString.length()-1) == ';'){
                     Query query = new Query(queryString);
+
+                    if(query.getQuery().type == "init"){
+
+                    }
+
+                    if(query.getQuery().type == "create"){
+
+                    }
 
                     Planner planner = new Planner(query.getQuery(), query.getPredicate());
 

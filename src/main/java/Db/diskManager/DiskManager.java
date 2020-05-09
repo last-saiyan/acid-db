@@ -4,6 +4,7 @@ package Db.diskManager;
 import Db.Acid;
 import Db.Constants;
 import Db.Utils;
+import Db.catalog.Field;
 import Db.catalog.TupleDesc;
 
 import java.io.*;
@@ -15,6 +16,7 @@ public class DiskManager implements Constants {
     RandomAccessFile ffile;
     private TupleDesc td;
     private Acid db;
+    private String dbFolderPath;
 
 
     public DiskManager(String path,  TupleDesc td) throws FileNotFoundException{
@@ -30,14 +32,48 @@ public class DiskManager implements Constants {
     }
 
 
-    public boolean databaseExist(){
-
-
-        return false;
+    /*
+    *
+    * check if the dbName.db file exists
+    * in db folder
+    *
+    * */
+    public boolean databaseExist(String dbName){
+//        should i validate the file size?
+        File dbFile =  new File(dbFolderPath + dbName + ".cat");
+        return  dbFile.isFile();
     }
 
 
-    public void createDatabase(String file) throws FileNotFoundException {
+    /*
+    *
+    * check if given path string is a folder
+    * if not create one and assign it to dbFolderPath
+    *
+    * */
+    public void setDbFolder(String dbFolderPath){
+        File dbFolder = new File(dbFolderPath);
+        if(dbFolder.exists()){
+            if(dbFolder.isDirectory()){
+                this.dbFolderPath = dbFolderPath;
+            }else {
+                if(!dbFolder.mkdir()){
+//                    throw error
+                }
+                this.dbFolderPath = dbFolderPath;
+            }
+        }else {
+            dbFolder.mkdir();
+            this.dbFolderPath = dbFolderPath;
+        }
+    }
+
+
+    public void createDbFile(String dbName) throws IOException {
+        new File(dbFolderPath + dbName + ".db").createNewFile();
+    }
+
+    public void setDatabase(String file) throws FileNotFoundException {
         this.file = new File(file);
         ffile = new RandomAccessFile(this.file, "rws");
     }

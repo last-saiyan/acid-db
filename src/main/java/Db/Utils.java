@@ -13,6 +13,8 @@ public interface Utils {
 
     public int port = 8081;
 
+    public String dbFolderPath = "";
+
     public static byte[] stringToByte(String str, int bytes){
         // does this support other encoding?
         byte [] value = str.getBytes(StandardCharsets.US_ASCII);

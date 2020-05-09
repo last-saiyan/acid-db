@@ -16,7 +16,7 @@ public class Manager {
     private Replacer replacer;
     private DiskManager diskManager;
 
-    public Manager(Acid db) throws Exception{
+    public Manager(Acid db) {
         diskManager = db.diskManager;
         replacer = new Lru(this);
         this.size = Utils.bfPoolsize;
