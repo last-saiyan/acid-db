@@ -1,10 +1,12 @@
 package Db.catalog;
 
 
+import java.io.Serializable;
+
 /*
 * field contains mapping of field name and field type, size
 * */
-public class Field {
+public class Field implements Serializable {
 
     public Field(String name, TypesEnum type, int size){
         this.size = size;

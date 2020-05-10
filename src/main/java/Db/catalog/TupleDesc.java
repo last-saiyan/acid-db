@@ -13,8 +13,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 public class TupleDesc implements Serializable {
-    private ArrayList<Field> fieldList;
+
     private HashMap<String, Field> fieldHashMap;
+    private ArrayList<Field> fieldList;
+
 
 
     public TupleDesc(ArrayList<Field> fieldList ){

@@ -12,6 +12,7 @@ public class Startup {
         String dbName = "";
 
         database = Acid.getDatabase();
+        database.run();
 
     }
 }

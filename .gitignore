@@ -1,3 +1,7 @@
+#project generated files
+*.db
+*.cat
+
 # Compiled class file
 *.class
 

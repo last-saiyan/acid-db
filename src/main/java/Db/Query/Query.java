@@ -22,7 +22,7 @@ public class Query {
         }
 
         TupleDesc tupleDesc = null;
-        predicate = new Predicate(query.where, tupleDesc);
+//        predicate = new Predicate(query.where, tupleDesc);
 
     }
 

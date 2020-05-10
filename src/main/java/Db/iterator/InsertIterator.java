@@ -1,6 +1,6 @@
 package Db.iterator;
 
-import Db.Query.Value;
+import Db.Query.ColValue;
 import Db.catalog.Tuple;
 
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ public class InsertIterator implements DbIterator {
     ArrayList<Tuple> tuples;
     Iterator<Tuple> iterator;
 
-    public InsertIterator(ArrayList<Value> values){
+    public InsertIterator(ArrayList<ColValue> values){
 
 
     }

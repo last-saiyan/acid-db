@@ -2,7 +2,7 @@ package Db.Query;
 
 public class ColValue {
 
-    String colName;
-    String value;
+    public String colName;
+    public String value;
 
 }
