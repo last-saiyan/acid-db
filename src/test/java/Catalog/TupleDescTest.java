@@ -18,7 +18,7 @@ public class TupleDescTest {
     void testTupleSerializeDeSerialize() throws IOException, ClassNotFoundException {
 
         String queryString = "{\"type\": \"create\",\"database\": \"dbname\",\"values\": [{\"colName\" :\"column1\",\"value\": \"STRING 30\"},{\"colName\":\"column2\",\"value\": \"INTEGER 4\"}]}\n";
-        Query query = new Query(queryString);
+        Query query = new Query(queryString, null);
 
         ArrayList<ColValue> colNameType = query.getQuery().values;
         ArrayList<Field> fieldList = new ArrayList();

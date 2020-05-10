@@ -13,7 +13,7 @@ public interface Utils {
 
     public int port = 8081;
 
-    public String dbFolderPath = "";
+    public String dbFolderPath = "./dbFile";
 
     public static byte[] stringToByte(String str, int bytes){
         // does this support other encoding?

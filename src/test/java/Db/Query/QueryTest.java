@@ -8,7 +8,7 @@ public class QueryTest {
     @Test
     void TestCreateQueryMapper(){
         String queryString = "{\"type\": \"create\",\"database\": \"dbname\",\"values\": [{\"colName\" :\"column1\",\"value\": \"string 30\"},{\"colName\":\"column2\",\"value\": \"int\"}]}\n";
-        Query query = new Query(queryString);
+        Query query = new Query(queryString, null);
 
         Assertions.assertEquals("dbname",query.query.database);
         Assertions.assertEquals("create", query.query.type);

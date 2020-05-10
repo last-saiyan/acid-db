@@ -19,16 +19,16 @@ public class DiskManager implements Constants {
     private String dbFolderPath;
 
 
-    public DiskManager(String path,  TupleDesc td) throws FileNotFoundException{
-        this.file = new File(path);
-        this.td = td;
-        ffile = new RandomAccessFile(file, "rws");
-    }
+//    public DiskManager(String path,  TupleDesc td) throws FileNotFoundException{
+//        this.file = new File(path);
+//        this.td = td;
+//        ffile = new RandomAccessFile(file, "rws");
+//    }
 
 
-    public DiskManager(Acid db) {
+    public DiskManager(Acid db, String dbFolderPath) {
         this.db = db;
-
+        setDbFolder(dbFolderPath);
     }
 
 
@@ -40,8 +40,9 @@ public class DiskManager implements Constants {
     * */
     public boolean databaseExist(String dbName){
 //        should i validate the file size?
-        File dbFile =  new File(dbFolderPath + dbName + ".cat");
-        return  dbFile.isFile();
+        File dbFile =  new File(dbFolderPath +"/" + dbName + ".cat");
+        boolean a=  dbFile.isFile();
+        return a;
     }
 
 
@@ -58,6 +59,7 @@ public class DiskManager implements Constants {
                 this.dbFolderPath = dbFolderPath;
             }else {
                 if(!dbFolder.mkdir()){
+                    System.out.println("unable to create a db");
 //                    throw error
                 }
                 this.dbFolderPath = dbFolderPath;
@@ -70,7 +72,7 @@ public class DiskManager implements Constants {
 
 
     public void createDbFile(String dbName) throws IOException {
-        new File(dbFolderPath + dbName + ".db").createNewFile();
+        new File(dbFolderPath+ "/" + dbName + ".db").createNewFile();
     }
 
     public void setDatabase(String file) throws FileNotFoundException {

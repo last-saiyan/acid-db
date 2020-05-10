@@ -44,6 +44,8 @@ public class TupleDesc implements Serializable {
         return (TupleDesc) objectinputstream.readObject();
     }
 
+
+
     public int tupleSize(){
         int size = 0;
         for(int i=0;i<fieldList.size();i++){

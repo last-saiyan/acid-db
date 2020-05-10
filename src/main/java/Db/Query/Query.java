@@ -11,18 +11,22 @@ public class Query {
     QueryMapper query;
     Predicate predicate;
 
-    public Query(String queryString){
+    public Query(String queryString, TupleDesc td){
         this.queryString = queryString;
         query = queryObject(queryString);
         if(query == null){
+            System.out.println("error query is not correct json parsing");
 //            throw exception
         }
         if(!validateQuery(query)){
+            System.out.println("error query is not validated");
 //            throw exception
         }
-
-        TupleDesc tupleDesc = null;
-//        predicate = new Predicate(query.where, tupleDesc);
+        System.out.println(query.type +" asdfasd");
+        if(!(query.type.equals("init") || query.type.equals("create"))){
+            TupleDesc tupleDesc = td;
+            predicate = new Predicate(query.where, tupleDesc);
+        }
 
     }
 

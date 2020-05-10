@@ -59,11 +59,11 @@
     "values": [
       {
         "colName" :"column1",
-        "value": "column type -> string 23"
+        "value": "string 10"
       },
       {
         "colName":"column2",
-        "value": "column type -> int"
+        "value": "integer 4"
       }
     ]
   },

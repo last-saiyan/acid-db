@@ -6,7 +6,9 @@ import Db.catalog.TupleDesc;
 import Db.catalog.TypesEnum;
 import Db.diskManager.DiskManager;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.ArrayList;
 
 public class CreateInit {
@@ -37,7 +39,7 @@ public class CreateInit {
                 ColValue temp = colNameType.get(i);
                 String[] valSize = temp.value.split(" ");
 
-                Field field = new Field(temp.colName, TypesEnum.valueOf(valSize[0]), Integer.parseInt(valSize[1]));
+                Field field = new Field(temp.colName, TypesEnum.valueOf(valSize[0].toUpperCase()), Integer.parseInt(valSize[1]));
                 fieldList.add(field);
             }
 
@@ -46,13 +48,14 @@ public class CreateInit {
             diskManager.createDbFile(query.database);
 
             try {
-                td.serializeToDisk(db.dbFolderPath + query.database + ".cat");
+                td.serializeToDisk(db.dbFolderPath + "/"+ query.database + ".cat");
             }catch (IOException e){
                 e.printStackTrace();
             }
 
         }else {
-//            throw error that the database exits
+            System.out.println("error database already exist");
+            throw new FileAlreadyExistsException(query.database,"", "database already exists");
         }
 
     }
@@ -69,11 +72,12 @@ public class CreateInit {
         DiskManager diskManager = db.diskManager;
 
         if(diskManager.databaseExist(query.database)){
-            TupleDesc td = TupleDesc.deSerializeFromDisk(query.database);
+            TupleDesc td = TupleDesc.deSerializeFromDisk(db.dbFolderPath + "/" +query.database + ".cat");
             diskManager.setDatabase(query.database);
             db.setTupleDesc(td);
         }else {
-//            throw error
+            System.out.println("error database is not present");
+            throw new FileNotFoundException(query.database);
         }
     }
 }
