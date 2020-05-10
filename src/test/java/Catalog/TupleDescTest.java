@@ -5,12 +5,12 @@ import Db.Query.Query;
 import Db.catalog.Field;
 import Db.catalog.TupleDesc;
 import Db.catalog.TypesEnum;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-import static com.sun.org.apache.xalan.internal.lib.ExsltStrings.split;
 
 public class TupleDescTest {
 
@@ -30,18 +30,23 @@ public class TupleDescTest {
             fieldList.add(field);
 
         }
-        System.out.println(fieldList.size());
+
 
         TupleDesc td = new TupleDesc(fieldList);
-        System.out.println(td.getFieldList().size());
-
         String TdPath = "./tdfile.cat";
         td.serializeToDisk(TdPath);
+        TupleDesc td1 = TupleDesc.deSerializeFromDisk(TdPath);
 
-        td = TupleDesc.deSerializeFromDisk(TdPath);
-        System.out.println(td.getFieldList().size());
+        Field f, f1;
+        for(int i=0; i<td.getFieldList().size(); i++){
+            f = td.getFieldList().get(i);
+            f1 = td1.getFieldList().get(i);
+            Assertions.assertEquals(f.size, f1.size);
+            Assertions.assertEquals(f.fieldName, f1.fieldName);
+            Assertions.assertEquals(f.typesEnum, f1.typesEnum);
+            Assertions.assertEquals(f.id, f1.id);
 
-
+        }
 
 
     }

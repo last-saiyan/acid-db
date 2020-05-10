@@ -12,55 +12,54 @@ public class Predicate {
 
     private String infix;
     private ExpTree tree;
-    private HashSet<Character> symbols;
+    private HashSet<String> symbols;
 
     public Predicate(String predStr, TupleDesc td){
         this.infix = predStr;
         ArrayList<String> tokens = tokenize(infix);
+        System.out.println(tokens);
         ArrayList<String> postFix = infixToPostfix(tokens);
+        System.out.println(postFix);
+
         tree = new ExpTree(postFix, td);
+    }
+
+    private String  stringAt(String s, int i){
+        return s.substring(i, i+1);
     }
 
     private ArrayList<String> tokenize( String exp){
         ArrayList<String> tokens = new ArrayList<>();
         symbols = new HashSet();
-        symbols.add('+');
-        symbols.add('-');
-        symbols.add('=');
-        symbols.add('&');
-        symbols.add('|');
-        symbols.add('(');
-        symbols.add(')');
-        symbols.add('*');
-        symbols.add('/');
-//        symbols.add(' ');
+        symbols.add("+");
+        symbols.add("-");
+        symbols.add("=");
+        symbols.add("&");
+        symbols.add("|");
+        symbols.add("(");
+        symbols.add(")");
+        symbols.add("*");
+        symbols.add("/");
+        symbols.add(" ");
 
         int prevInd = 0;
         int nextInd = 0;
 
-//        check this
         while (nextInd < exp.length()){
-            if(exp.charAt(nextInd) == ' '){
-                String temp = exp.substring(prevInd, nextInd-1);
-                temp = temp.trim();
-                if(temp!= "") {
-                    tokens.add(temp);
+            if(symbols.contains(stringAt(exp, nextInd))){
+                if(prevInd != nextInd) {
+                    tokens.add(exp.substring(prevInd, nextInd));
                 }
-                prevInd = nextInd+1;
+                tokens.add(stringAt(exp, nextInd));
+                nextInd++;
+                prevInd = nextInd;
+            }else{
+                nextInd++;
             }
-            if( symbols.contains(exp.charAt(nextInd)) ){
-                String temp = exp.substring(prevInd, nextInd-1);
-                temp = temp.trim();
-                if(temp!= "") {
-                    tokens.add(temp);
-                }
-                temp = exp.substring(nextInd, nextInd);
-                tokens.add(temp);
-                prevInd = nextInd+1;
-            }
-            nextInd++;
         }
-
+        if(prevInd != nextInd) {
+            tokens.add(exp.substring(prevInd, nextInd));
+        }
         return tokens;
     }
 
@@ -108,21 +107,26 @@ public class Predicate {
     private ArrayList<String> infixToPostfix(ArrayList<String> infix){
         ArrayList<String> result = new ArrayList<>();
         Stack<String> stack = new Stack<>();
+
         for (int i = 0; i<infix.size(); ++i) {
             String c = infix.get(i);
-
-            // If the scanned character is an operand, add it to output.
-            if (!symbols.contains(c.charAt(0))) {
+//            if scanned string is a space continue
+            if(c.equals(" ") || c.equals("")){
+                continue;
+            }
+//            If the scanned character is an operand, add it to output.
+            if (!symbols.contains(c)) {
                 result.add(c);
-                // If the scanned character is an '(', push it to the stack.
+//                 If the scanned character is an '(', push it to the stack.
             }else if (c.equals("(")) {
                 stack.push(c);
-                //  If the scanned character is an ')', pop and output from the stack
-                // until an '(' is encountered.
+//                If the scanned character is an ')', pop and output from the stack
+//                until an '(' is encountered.
             }else if (c.equals(")")) {
                 while (!stack.isEmpty() && !stack.peek().equals("("))
                     result.add(stack.pop());
                 if (!stack.isEmpty() && !stack.peek().equals("(")) {
+                    System.out.println("invalid expression");
                     return null;
 //                  throw error Invalid Expression
                 }else
@@ -130,6 +134,7 @@ public class Predicate {
             } else{ // an operator is encountered{
                 while (!stack.isEmpty() && precedence(c.charAt(0)) <= precedence(stack.peek().charAt(0))){
                     if(stack.peek().equals("(")) {
+                        System.out.println("invalid expression");
                         return null;
 //                      throw error Invalid Expression
                     }
@@ -138,9 +143,10 @@ public class Predicate {
                 stack.push(c);
             }
         }
-        // pop all the operators from the stack
+//        pop all the operators from the stack
         while (!stack.isEmpty()){
             if(stack.peek().equals("(")) {
+                System.out.println("invalid expression");
                 return null;
 //               throw error Invalid Expression
             }
