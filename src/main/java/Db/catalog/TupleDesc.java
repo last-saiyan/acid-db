@@ -23,6 +23,8 @@ public class TupleDesc implements Serializable {
         this.fieldList = fieldList;
         fieldHashMap = new HashMap();
 
+
+
         for(int i=0;i<fieldList.size() ; i++){
             fieldHashMap.put(fieldList.get(i).fieldName, fieldList.get(i));
         }

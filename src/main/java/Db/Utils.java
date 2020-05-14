@@ -27,8 +27,8 @@ public interface Utils {
         }if(value.length == bytes){
             return value;
         }else{
-            //exception
-            return null;
+            System.out.println("array overflow");
+            throw new ArrayStoreException("string exceeds length");
         }
     }
 

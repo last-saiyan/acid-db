@@ -1,5 +1,6 @@
 package Db.Query;
 
+import Db.Acid;
 import Db.bufferManager.Manager;
 import Db.catalog.TupleDesc;
 import Db.iterator.*;
@@ -7,10 +8,11 @@ import Db.iterator.*;
 public class Planner {
     private QueryMapper query;
     private Predicate predicate;
-
+    private Manager bfManager;
     public Planner(QueryMapper query, Predicate predicate){
         this.query = query;
         this.predicate = predicate;
+        bfManager = Acid.getDatabase().bufferPoolManager;;
     }
 
     public DbIterator getplan(){
@@ -20,7 +22,7 @@ public class Planner {
                 return selectIterator(query, predicate);
             case "update":
                 return updateIterator(query, predicate);
-            case "create":
+            case "insert":
                 return insertIterator(query);
             case "delete":
                 return deleteIterator(query, predicate);
@@ -30,7 +32,6 @@ public class Planner {
     }
 
     private DbIterator selectIterator(QueryMapper query, Predicate predicate){
-        Manager bfManager = null;
 //      get these from a static class
 
         HeapFileIterator pageIter = new HeapFileIterator(bfManager);
@@ -42,7 +43,6 @@ public class Planner {
 
 
     private DbIterator updateIterator(QueryMapper query, Predicate predicate){
-        Manager bfManager = null;
 //      get these from a static class
         HeapFileIterator pageIter = new HeapFileIterator(bfManager);
         DbIterator iter = new TupleIterator(pageIter, predicate);
@@ -51,15 +51,13 @@ public class Planner {
 
     }
     private DbIterator insertIterator(QueryMapper query){
-        Manager bfManager = null;
 
-        DbIterator iter = new InsertIterator(query.values);
+        DbIterator iter = new InsertIterator(query.values, Acid.getDatabase().tupleDesc);
         return new Insertion(iter, bfManager);
 
     }
     private DbIterator deleteIterator(QueryMapper query, Predicate predicate){
 
-        Manager bfManager = null;
 //      get these from a static class
 
         HeapFileIterator pageIter = new HeapFileIterator(bfManager);

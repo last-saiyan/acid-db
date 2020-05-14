@@ -42,6 +42,7 @@ public class Tuple {
         }
         byte [] byteTuple = new byte[size];
         int pos = 0;
+
         for(Map.Entry<String, Value> entry: values.entrySet()){
             byte[] temp =  entry.getValue().getValue();
             System.arraycopy(temp,0,byteTuple, pos, temp.length);

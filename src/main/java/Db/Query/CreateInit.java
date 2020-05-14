@@ -74,6 +74,7 @@ public class CreateInit {
         if(diskManager.databaseExist(query.database)){
             TupleDesc td = TupleDesc.deSerializeFromDisk(db.dbFolderPath + "/" +query.database + ".cat");
             diskManager.setDatabase(query.database);
+            db.dbPageCount = diskManager.dbSize();
             db.setTupleDesc(td);
         }else {
             System.out.println("error database is not present");

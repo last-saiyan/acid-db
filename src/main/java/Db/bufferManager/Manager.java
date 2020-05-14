@@ -3,6 +3,7 @@ package Db.bufferManager;
 import Db.Acid;
 import Db.Utils;
 import Db.catalog.Tuple;
+import Db.catalog.TupleDesc;
 import Db.diskManager.Page;
 import Db.diskManager.DiskManager;
 
@@ -15,6 +16,7 @@ public class Manager {
     public int size;
     private Replacer replacer;
     private DiskManager diskManager;
+    Acid db;
 
     public Manager(Acid db) {
         diskManager = db.diskManager;
@@ -25,6 +27,7 @@ public class Manager {
         for(int i=0;i<size;i++){
             pageMapping[i] = new PageMeta();
         }
+        this.db = db;
     }
 
     /*
@@ -97,14 +100,15 @@ public class Manager {
     public void insertTuple(Tuple tuple){
         int i = 0;
         Page temp = bufferPool[0];
+
         boolean found = false;
         while (i < bufferPool.length){
-            if(temp.pageDataCapacity < tuple.size() + temp.pageSize()){
+            temp = bufferPool[i];
+            if(temp!=null && temp.pageDataCapacity < tuple.size() + temp.pageSize()){
                 found = true;
                 break;
             }
             i++;
-            temp = bufferPool[i];
         }
         if(found == true){
             temp = bufferPool[i];
@@ -127,11 +131,18 @@ public class Manager {
 
         int buffPoolInd = replacer.pickVictim();
         if(buffPoolInd == -1){
+//            when to throw runtime exception?
+            throw new RuntimeException("buffer pool full");
 //            throw exception
         }
+        System.out.println(buffPoolInd + " buffPoolInd");
 
-        if(pageMapping[buffPoolInd].dirty){
+        if(pageMapping[buffPoolInd]!= null && pageMapping[buffPoolInd].dirty){
             flushPageToDisk(buffPoolInd);
+            db.dbPageCount++;
+            int pageId = db.dbPageCount;
+            Page  page = new Page(pageId, db.tupleDesc);
+            bufferPool[buffPoolInd] = page;
             return bufferPool[buffPoolInd];
         }else{
             return bufferPool[buffPoolInd];

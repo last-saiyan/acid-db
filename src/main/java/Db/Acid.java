@@ -22,7 +22,7 @@ public class Acid implements Utils{
      public String dbFolderPath;
      public String dbName;
      public Server server;
-
+     public int dbPageCount;
 
      private Acid()  {
 

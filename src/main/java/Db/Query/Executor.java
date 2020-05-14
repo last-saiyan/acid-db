@@ -23,7 +23,7 @@ public class Executor {
     public void run() throws IOException {
 
         Tuple temp;
-
+        iterator.open();
         while (iterator.hasNext()){
             temp = iterator.next();
             outputStream.write(temp.toString().getBytes());
