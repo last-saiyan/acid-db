@@ -1,9 +1,7 @@
-package Db.Query;
+package Db.query;
 
 import Db.catalog.TupleDesc;
 import com.google.gson.Gson;
-
-import java.util.ArrayList;
 
 public class Query {
 
@@ -23,7 +21,7 @@ public class Query {
 //            throw exception
         }
         System.out.println(query.type +" asdfasd");
-        if(!(query.type.equals("init") || query.type.equals("create") || query.type.equals("insert"))){
+        if(!(query.type.equals("init") || query.type.equals("select") || query.type.equals("create") || query.type.equals("insert"))){
             TupleDesc tupleDesc = td;
             predicate = new Predicate(query.where, tupleDesc);
         }

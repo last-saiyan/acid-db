@@ -1,4 +1,4 @@
-package Db.Query;
+package Db.query;
 
 public class ColValue {
 

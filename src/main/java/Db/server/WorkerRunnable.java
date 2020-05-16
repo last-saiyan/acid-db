@@ -1,11 +1,10 @@
 package Db.server;
 
 import Db.Acid;
-import Db.Query.CreateInit;
-import Db.Query.Executor;
-import Db.Query.Planner;
-import Db.Query.Query;
-import Db.diskManager.DiskManager;
+import Db.query.CreateInit;
+import Db.query.Executor;
+import Db.query.Planner;
+import Db.query.Query;
 
 import java.io.*;
 import java.net.Socket;
@@ -32,7 +31,7 @@ public class WorkerRunnable implements Runnable {
 
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(input), 1024);
 
-            String queryString = "";
+            String queryString = "{\"type\": \"init\",\"database\": \"dbname\"}";
             String tempString ;
             while((tempString = bufferedReader.readLine()) != null){
                 tempString = tempString.trim();

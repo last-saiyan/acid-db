@@ -1,8 +1,7 @@
-package Db.Query;
+package Db.query;
 
 import Db.Acid;
 import Db.bufferManager.Manager;
-import Db.catalog.TupleDesc;
 import Db.iterator.*;
 
 public class Planner {
@@ -19,7 +18,7 @@ public class Planner {
 
         switch (query.type){
             case "select":
-                return selectIterator(query, predicate);
+                return selectIterator(query, null);
             case "update":
                 return updateIterator(query, predicate);
             case "insert":

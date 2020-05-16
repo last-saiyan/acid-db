@@ -1,6 +1,8 @@
 package Db.iterator;
 
-import Db.Query.Predicate;
+import Db.Acid;
+import Db.Utils;
+import Db.query.Predicate;
 import Db.diskManager.Page;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
@@ -16,7 +18,7 @@ public class TupleIterator implements DbIterator {
     public TupleIterator(HeapFileIterator pageIterator, Predicate predicate){
         this.pageIterator = pageIterator;
 //        initilize this from a static class
-        this.tDesc = null;
+        this.tDesc = Acid.getDatabase().tupleDesc;
     }
 
     @Override
@@ -50,7 +52,9 @@ public class TupleIterator implements DbIterator {
     * */
     @Override
     public boolean hasNext(){
+
         int pageSize = page.getHeader("size");
+//        correct the logic here
         if(tupleIndex<pageSize){
             return true;
         }else{
@@ -69,18 +73,18 @@ public class TupleIterator implements DbIterator {
 
         if(hasNext()){
             int offset = tupleIndex*tDesc.tupleSize();
+            System.out.println(page.pageData.length+ " - pageData");
+            System.out.println(page.pageHeader.size()*4+ " - headerdata");
+            System.out.println(Utils.pageSize + " - pageSize");
+
             byte[] tupleByte = new byte[tDesc.tupleSize()];
             System.arraycopy(page.pageData,offset,tupleByte,0,tDesc.tupleSize());
             tupleIndex++;
             return new Tuple(tupleByte, tDesc);
         }else{
-
+            throw new RuntimeException("no more tuples ");
 //            throw exception
         }
-
-
-
-        return null;
     }
 
     @Override

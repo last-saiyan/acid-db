@@ -21,7 +21,7 @@ public class Projection extends Operator {
 
     @Override
     public void open() {
-
+        child.open();
     }
 
     @Override
@@ -43,13 +43,13 @@ public class Projection extends Operator {
 
             HashMap<String, Value> tupleMap = tuple.getMapValue();
 
-            HashMap<String, Value> outupleMap = new HashMap();
+            HashMap<String, Value> outTupleMap = new HashMap();
 
             for(int i=0; i<outputFieldList.size(); i++){
                 String fieldName = outputFieldList.get(i);
-                outupleMap.put(fieldName, tupleMap.get(fieldName));
+                outTupleMap.put(fieldName, tupleMap.get(fieldName));
             }
-            Tuple outputTuple = new Tuple(outupleMap);
+            Tuple outputTuple = new Tuple(outTupleMap);
             return outputTuple;
 
         }

@@ -1,4 +1,4 @@
-package Db.Query;
+package Db.query;
 
 import Db.catalog.Tuple;
 import Db.iterator.DbIterator;

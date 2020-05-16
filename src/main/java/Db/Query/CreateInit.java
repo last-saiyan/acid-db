@@ -1,4 +1,4 @@
-package Db.Query;
+package Db.query;
 
 import Db.Acid;
 import Db.catalog.Field;

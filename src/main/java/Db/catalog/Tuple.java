@@ -40,6 +40,7 @@ public class Tuple {
     private byte[] encodeTupleToByte(HashMap<String, Value> values){
         int size = 0;
         for(Map.Entry<String, Value> entry: values.entrySet()){
+            System.out.println(entry + " -size");
             size = size + entry.getValue().size;
         }
         byte [] byteTuple = new byte[size];
@@ -57,6 +58,7 @@ public class Tuple {
 
     private HashMap<String, Value> decodeTupleToMap(TupleDesc tDesc, byte[] byteTuple) {
         Iterator<Field> iter = tDesc.open();
+        fieldValuesMap = new HashMap();
         Field tempField;
         byte[] tempByte ;
         int index = 0;
@@ -72,7 +74,7 @@ public class Tuple {
             }
             index = index + tempField.getSize();
         }
-        return null;
+        return fieldValuesMap;
     }
 
 

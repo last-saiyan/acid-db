@@ -1,6 +1,6 @@
 package Db.iterator;
 
-import Db.Query.ColValue;
+import Db.query.ColValue;
 import Db.catalog.*;
 
 import java.util.ArrayList;

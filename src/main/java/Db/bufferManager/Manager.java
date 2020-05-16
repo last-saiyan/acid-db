@@ -61,7 +61,7 @@ public class Manager {
     * */
     public int pinPage(int pId) {
         int bfPoolInd = getBufferPoolPageInd(pId);
-        if(bfPoolInd > 0){
+        if(bfPoolInd >= 0){
             pageMapping[bfPoolInd].pinCounter++;
             replacer.updateEntry(bfPoolInd);
             return bfPoolInd;
@@ -113,12 +113,12 @@ public class Manager {
 
     public void insertTuple(Tuple tuple){
         int i = 0;
-        Page temp = bufferPool[0];
+        Page tempPage = bufferPool[0];
 
         boolean found = false;
         while (i < bufferPool.length){
-            temp = bufferPool[i];
-            if(temp!=null && temp.pageDataCapacity < tuple.size() + temp.pageSize()){
+            tempPage = bufferPool[i];
+            if(tempPage != null && tempPage.pageDataCapacity < tuple.size() + tempPage.pageSize()){
                 replacer.updateEntry(i);
                 found = true;
                 break;
@@ -126,11 +126,11 @@ public class Manager {
             i++;
         }
         if(found == true){
-            temp = bufferPool[i];
+            tempPage = bufferPool[i];
         }else {
-            temp = insertNewPage();
+            tempPage = insertNewPage();
         }
-        temp.insertTuple(tuple);
+        tempPage.insertTuple(tuple);
 
     }
 
@@ -145,14 +145,16 @@ public class Manager {
     public Page insertNewPage(){
         int buffPoolInd = replacer.pickVictim();
 
-        db.dbPageCount++;
         int pageId = db.dbPageCount;
+        db.dbPageCount++;
         Page  page = new Page(pageId, db.tupleDesc);
         if(pageMapping[buffPoolInd]!= null && pageMapping[buffPoolInd].dirty){
             flushPageToDisk(buffPoolInd);
         }
         bufferPool[buffPoolInd] = page;
         pageMapping[buffPoolInd].pinCounter++;
+        pageMapping[buffPoolInd].pId = pageId;
+
         replacer.updateEntry(buffPoolInd);
         return bufferPool[buffPoolInd];
     }
@@ -193,9 +195,10 @@ public class Manager {
     * of the page in bufferPool
     * */
     private int getBufferPoolPageInd(int pId){
-        for(int i=0;i<pageMapping.length;i++){
-            if(pId == pageMapping[i].pId)
+        for(int i=0; i<pageMapping.length; i++){
+            if(pageMapping[i]!= null  && pId == pageMapping[i].pId) {
                 return i;
+            }
         }
         return -1;
     }
@@ -204,7 +207,7 @@ public class Manager {
 }
 
 class PageMeta{
-    public int pId;
+    public int pId = -1;
     public int pinCounter = 0;
     public boolean dirty = false;
 }
