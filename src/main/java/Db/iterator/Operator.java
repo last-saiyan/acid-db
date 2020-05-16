@@ -15,14 +15,16 @@ public abstract  class Operator implements DbIterator {
     public Tuple next(){
         if(currentTuple == null) {
             currentTuple = fetchNext();
-            if(currentTuple == null){
-                throw new NoSuchElementException();
-            }
+
+//            if(currentTuple == null){
+//                throw new NoSuchElementException();
+//            }
         }
         Tuple tempTuple = currentTuple;
         currentTuple = null;
         return tempTuple;
     }
+
 
     public  boolean hasNext(){
         if(currentTuple == null){
@@ -34,6 +36,7 @@ public abstract  class Operator implements DbIterator {
             return true;
         }
     }
+
     protected abstract Tuple fetchNext();
 
 

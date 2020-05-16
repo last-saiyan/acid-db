@@ -53,39 +53,53 @@ public class Manager {
 
 
     /*
-    * this gets called when a query
+    * it returns the buffer pool index of the pinned page
     *  needs to use a page using getPage(int id)
     * pinned pages cant be evicted
     * check the pageMapping if the page is in bufferPool
     * else get from disk
     * */
-    public int pinPage(int pId){
+    public int pinPage(int pId) {
         int bfPoolInd = getBufferPoolPageInd(pId);
         if(bfPoolInd > 0){
             pageMapping[bfPoolInd].pinCounter++;
+            replacer.updateEntry(bfPoolInd);
             return bfPoolInd;
         }else{
+//            this line throws exception
+//            if all pages in buffer pool is pinned
             int victimID = replacer.pickVictim();
-            if(victimID<0){
-                return -1;
-            }
             if(pageMapping[victimID].dirty){
                 flushPageToDisk(victimID);
-//                bufferPool[victimID]
                 pageMapping[victimID].pId = pId;
                 pageMapping[victimID].pinCounter++;
                 Page page = readPageFromDisk(pId);
                 bufferPool[victimID] = page;
-                replacer.update(pId);
+                replacer.updateEntry(pId);
                 return victimID;
             }else{
                 pageMapping[victimID].pId = pId;
                 pageMapping[victimID].pinCounter++;
                 Page page = readPageFromDisk(pId);
                 bufferPool[victimID] = page;
-                replacer.update(pId);
+                replacer.updateEntry(pId);
                 return victimID;
             }
+        }
+    }
+
+    /*
+    * this is called to unpin the page
+    * when query is done using the page
+    * page has to be un pinned
+    *
+    * */
+    public void unPinPage(int pId){
+        int bfPoolId = getBufferPoolPageInd(pId);
+        if(bfPoolId != -1){
+            pageMapping[bfPoolId].pinCounter--;
+        }else {
+            throw new ArrayIndexOutOfBoundsException("trying to unpin page that is not in buffer pool");
         }
     }
 
@@ -105,6 +119,7 @@ public class Manager {
         while (i < bufferPool.length){
             temp = bufferPool[i];
             if(temp!=null && temp.pageDataCapacity < tuple.size() + temp.pageSize()){
+                replacer.updateEntry(i);
                 found = true;
                 break;
             }
@@ -128,26 +143,18 @@ public class Manager {
     *
     * */
     public Page insertNewPage(){
-
         int buffPoolInd = replacer.pickVictim();
-        if(buffPoolInd == -1){
-//            when to throw runtime exception?
-            throw new RuntimeException("buffer pool full");
-//            throw exception
-        }
-        System.out.println(buffPoolInd + " buffPoolInd");
 
+        db.dbPageCount++;
+        int pageId = db.dbPageCount;
+        Page  page = new Page(pageId, db.tupleDesc);
         if(pageMapping[buffPoolInd]!= null && pageMapping[buffPoolInd].dirty){
             flushPageToDisk(buffPoolInd);
-            db.dbPageCount++;
-            int pageId = db.dbPageCount;
-            Page  page = new Page(pageId, db.tupleDesc);
-            bufferPool[buffPoolInd] = page;
-            return bufferPool[buffPoolInd];
-        }else{
-            return bufferPool[buffPoolInd];
         }
-
+        bufferPool[buffPoolInd] = page;
+        pageMapping[buffPoolInd].pinCounter++;
+        replacer.updateEntry(buffPoolInd);
+        return bufferPool[buffPoolInd];
     }
 
 
@@ -170,13 +177,15 @@ public class Manager {
         return null;
     }
 
-    public boolean isPagePinned(int id){
-        if(pageMapping[getBufferPoolPageInd(id)].pinCounter == 0){
+
+    public boolean isPagePinned(int bufferPoolInd){
+        if(pageMapping[getBufferPoolPageInd(bufferPoolInd)].pinCounter == 0){
             return false;
         }else {
             return true;
         }
     }
+
 
     /*
     * for a page with given page id

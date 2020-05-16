@@ -8,8 +8,9 @@ abstract public class Replacer {
         this.buffMan = buffMan;
     }
 
-    public abstract int pickVictim();
+    public abstract int updateEntry(int key);
 
-    public abstract void update(int frameNo);
+
+    public abstract int pickVictim() ;
 
 }

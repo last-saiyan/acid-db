@@ -1,5 +1,6 @@
 package Db.catalog;
 
+import Db.Acid;
 import Db.Utils;
 
 import java.util.*;
@@ -24,6 +25,7 @@ public class Tuple {
     public Tuple(HashMap<String, Value> values){
         this.fieldValuesMap = values;
         this.byteTuple = encodeTupleToByte(values);
+        this.tupleDesc = Acid.getDatabase().tupleDesc;
     }
 
 
@@ -99,6 +101,8 @@ public class Tuple {
             tupleString += field.fieldName + " - ";
             
             tupleString += fieldValuesMap.get(field.fieldName).toString();
+
+            tupleString +=  " ;";
         }
         return tupleString;
     }
