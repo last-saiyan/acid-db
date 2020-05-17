@@ -17,19 +17,13 @@ public class InsertIterator implements DbIterator {
         tuples = new ArrayList();
         HashMap<String, Value> tupleMap = new HashMap();
         HashMap<String, Field> fieldMap;
-        Value tempValue = null;
+        Value tempValue;
         for (int i=0; i<values.size(); i++){
             ColValue colValue = values.get(i);
             fieldMap = td.getFieldMap();
-
             TypesEnum type = fieldMap.get(colValue.colName).typesEnum;
             int size = fieldMap.get(colValue.colName).size;
-            try {
-                tempValue = ValueFactory.getValue(type,size, colValue.value);
-            } catch (UnknownObjectException e) {
-//                need to abort the transaction
-                e.printStackTrace();
-            }
+            tempValue = ValueFactory.getValue(type,size, colValue.value);
             tupleMap.put(colValue.colName, tempValue);
         }
         Tuple temp = new Tuple(tupleMap);

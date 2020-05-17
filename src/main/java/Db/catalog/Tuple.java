@@ -65,13 +65,12 @@ public class Tuple {
         while (iter.hasNext()){
             tempField = iter.next();
             tempByte = new byte[tempField.getSize()];
-            if(tempField.typesEnum == TypesEnum.STRING){
-                System.arraycopy(byteTuple,index,tempByte,0,tempByte.length);
-                fieldValuesMap.put(tempField.fieldName, new StringValue(tempByte));
-            }else if(tempField.typesEnum == TypesEnum.INTEGER){
-                System.arraycopy(byteTuple,index,tempByte,0,tempByte.length);
-                fieldValuesMap.put(tempField.fieldName, new IntValue(tempByte));
-            }
+
+            System.arraycopy(byteTuple,index,tempByte,0,tempByte.length);
+            Value tempValue   = ValueFactory.getValue(tempField.typesEnum, tempByte);
+
+            fieldValuesMap.put(tempField.fieldName, tempValue);
+
             index = index + tempField.getSize();
         }
         return fieldValuesMap;
