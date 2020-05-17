@@ -40,7 +40,6 @@ public class Tuple {
     private byte[] encodeTupleToByte(HashMap<String, Value> values){
         int size = 0;
         for(Map.Entry<String, Value> entry: values.entrySet()){
-            System.out.println(entry + " -size");
             size = size + entry.getValue().size;
         }
         byte [] byteTuple = new byte[size];

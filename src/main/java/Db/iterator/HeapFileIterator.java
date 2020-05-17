@@ -2,6 +2,7 @@ package Db.iterator;
 
 import Db.bufferManager.Manager;
 import Db.catalog.Tuple;
+import Db.diskManager.DiskManager;
 import Db.diskManager.Page;
 
 /*
@@ -22,6 +23,7 @@ public class HeapFileIterator {
 
 
     public boolean hasNext(){
+
 
         return false;
     }
