@@ -17,13 +17,12 @@ public class TupleIterator implements DbIterator {
 
     public TupleIterator(HeapFileIterator pageIterator, Predicate predicate){
         this.pageIterator = pageIterator;
-//        initilize this from a static class
-        this.tDesc = Acid.getDatabase().tupleDesc;
     }
 
     @Override
     public void open(){
         this.page = pageIterator.getNextPage();
+        this.tDesc = page.getTupleDesc();
         tupleIndex = 0;
     }
 
@@ -54,8 +53,7 @@ public class TupleIterator implements DbIterator {
     public boolean hasNext(){
 
         int pageSize = page.getHeader("size");
-//        correct the logic here
-        if(tupleIndex<pageSize){
+        if((tupleIndex*tDesc.tupleSize())<pageSize){
             return true;
         }else{
             if(pageIterator.hasNext()){
@@ -73,9 +71,6 @@ public class TupleIterator implements DbIterator {
 
         if(hasNext()){
             int offset = tupleIndex*tDesc.tupleSize();
-            System.out.println(page.pageData.length+ " - pageData");
-            System.out.println(page.pageHeader.size()*4+ " - headerdata");
-            System.out.println(Utils.pageSize + " - pageSize");
 
             byte[] tupleByte = new byte[tDesc.tupleSize()];
             System.arraycopy(page.pageData,offset,tupleByte,0,tDesc.tupleSize());

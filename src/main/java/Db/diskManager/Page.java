@@ -3,13 +3,11 @@ package Db.diskManager;
 import Db.Utils;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
-import Db.catalog.TupleIterator;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
-public class Page implements Utils, Iterable<Tuple> {
+public class Page implements Utils {
 
     public HashMap<String, Integer> pageHeader = new HashMap();
     public byte[] pageData;
@@ -57,14 +55,16 @@ public class Page implements Utils, Iterable<Tuple> {
 
     }
 
-    public boolean insertTuple(Tuple tuple){
+    public TupleDesc getTupleDesc(){
+        return this.td;
+    }
+    public void insertTuple(Tuple tuple){
         int size = pageHeader.get("size");
         if(tuple.size() + size < pageDataCapacity){
             System.arraycopy(tuple.getBytes(),0, pageData, size, tuple.size());
             pageHeader.put("size", tuple.size() + size);
-            return true;
         }else {
-            return false;
+            throw new ArrayIndexOutOfBoundsException("cant insert any more tuples in the page");
         }
     }
 
@@ -74,9 +74,6 @@ public class Page implements Utils, Iterable<Tuple> {
         insertTuple(tuple);
     }
 
-    public Iterator<Tuple> iterator() {
-        return new TupleIterator(this);
-    }
 
 
     private byte[] headerToByte(){
