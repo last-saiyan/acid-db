@@ -2,16 +2,19 @@ package Db.query;
 
 import Db.Acid;
 import Db.bufferManager.Manager;
+import Db.diskManager.DiskManager;
 import Db.iterator.*;
 
 public class Planner {
     private QueryMapper query;
     private Predicate predicate;
     private Manager bfManager;
+    private DiskManager dskMgr;
     public Planner(QueryMapper query, Predicate predicate){
         this.query = query;
         this.predicate = predicate;
-        bfManager = Acid.getDatabase().bufferPoolManager;;
+        bfManager = Acid.getDatabase().bufferPoolManager;
+        dskMgr = Acid.getDatabase().diskManager;
     }
 
     public DbIterator getplan(){
@@ -33,7 +36,7 @@ public class Planner {
     private DbIterator selectIterator(QueryMapper query, Predicate predicate){
 //      get these from a static class
 
-        HeapFileIterator pageIter = new HeapFileIterator(bfManager);
+        HeapFileIterator pageIter = new HeapFileIterator(bfManager, dskMgr);
 
         DbIterator iter = new TupleIterator(pageIter, predicate);
 
@@ -43,7 +46,7 @@ public class Planner {
 
     private DbIterator updateIterator(QueryMapper query, Predicate predicate){
 //      get these from a static class
-        HeapFileIterator pageIter = new HeapFileIterator(bfManager);
+        HeapFileIterator pageIter = new HeapFileIterator(bfManager, dskMgr);
         DbIterator iter = new TupleIterator(pageIter, predicate);
 //        correct this later implement new operator
         return null;
@@ -59,7 +62,7 @@ public class Planner {
 
 //      get these from a static class
 
-        HeapFileIterator pageIter = new HeapFileIterator(bfManager);
+        HeapFileIterator pageIter = new HeapFileIterator(bfManager, dskMgr);
         DbIterator iter = new TupleIterator(pageIter, predicate);
         return new Deletion(iter);
 

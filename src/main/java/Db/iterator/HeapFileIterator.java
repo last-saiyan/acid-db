@@ -15,17 +15,22 @@ public class HeapFileIterator {
     Manager bfPoolManager;
     int pageCount;
     Page currentPage;
+    DiskManager dskMgr;
 
-    public HeapFileIterator(Manager mgr){
+    public HeapFileIterator(Manager mgr,DiskManager dskMgr){
         bfPoolManager = mgr;
         pageCount = 0;
+        this.dskMgr = dskMgr;
     }
 
 
     public boolean hasNext(){
 
-
-        return false;
+        if(pageCount < dskMgr.dbSize()){
+            return true;
+        }else {
+            return false;
+        }
     }
 
     public void close(){

@@ -3,7 +3,6 @@ package Db.bufferManager;
 import Db.Acid;
 import Db.Utils;
 import Db.catalog.Tuple;
-import Db.catalog.TupleDesc;
 import Db.diskManager.Page;
 import Db.diskManager.DiskManager;
 
@@ -16,10 +15,9 @@ public class Manager {
     public int size;
     private Replacer replacer;
     private DiskManager diskManager;
-    Acid db;
 
-    public Manager(Acid db) {
-        diskManager = db.diskManager;
+    public Manager(DiskManager diskManager) {
+        this.diskManager = diskManager;
         replacer = new Lru(this);
         this.size = Utils.bfPoolsize;
         bufferPool = new Page[size];
@@ -27,7 +25,6 @@ public class Manager {
         for(int i=0;i<size;i++){
             pageMapping[i] = new PageMeta();
         }
-        this.db = db;
     }
 
     /*
@@ -145,15 +142,13 @@ public class Manager {
     public Page insertNewPage(){
         int buffPoolInd = replacer.pickVictim();
 
-        int pageId = db.dbPageCount;
-        db.dbPageCount++;
-        Page  page = new Page(pageId, db.tupleDesc);
+        Page page = diskManager.getNewPage();
         if(pageMapping[buffPoolInd]!= null && pageMapping[buffPoolInd].dirty){
             flushPageToDisk(buffPoolInd);
         }
         bufferPool[buffPoolInd] = page;
         pageMapping[buffPoolInd].pinCounter++;
-        pageMapping[buffPoolInd].pId = pageId;
+        pageMapping[buffPoolInd].pId = page.getHeader("id");
 
         replacer.updateEntry(buffPoolInd);
         return bufferPool[buffPoolInd];

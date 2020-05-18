@@ -22,13 +22,13 @@ public class Acid implements Utils{
      public String dbFolderPath;
      public String dbName;
      public Server server;
-     public int dbPageCount;
+     public int dbPageCount = -1;
 
      private Acid()  {
 
-         bufferPoolManager = new Manager(this);
          dbFolderPath = Utils.dbFolderPath;
          diskManager = new DiskManager(database, dbFolderPath);
+         bufferPoolManager = new Manager(diskManager);
          server = new Server(Utils.port);
          dbName = null;
 
