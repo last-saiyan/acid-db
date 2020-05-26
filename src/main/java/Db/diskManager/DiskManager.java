@@ -82,10 +82,20 @@ public class DiskManager implements Constants {
 
 
     public int dbSize(){
-        if(file.length()%Utils.pageSize == 0){
-            return (int)file.length()/Utils.pageSize;
+        if(db.dbPageCount == -1) {
+            if (file.length() % Utils.pageSize == 0) {
+                return (int) file.length() / Utils.pageSize;
+            }
+            throw new RuntimeException("some thing is wrong with page size ");
+        }else {
+            return db.dbPageCount;
         }
-        throw new RuntimeException("some thing is wrong with page size ");
+    }
+
+    public Page getNewPage(){
+        int pageId = db.dbPageCount;
+        db.dbPageCount++;
+        return new Page(pageId, db.tupleDesc);
     }
 
     private static int startRange(int id){
