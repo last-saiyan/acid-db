@@ -1,6 +1,7 @@
 package Db.server;
 
 import Db.Acid;
+import Db.Tx.Transaction;
 import Db.query.CreateInit;
 import Db.query.Executor;
 import Db.query.Planner;
@@ -25,13 +26,13 @@ public class WorkerRunnable implements Runnable {
             InputStream input  = clientSocket.getInputStream();
             OutputStream output = clientSocket.getOutputStream();
             long time = System.currentTimeMillis();
-
+            Transaction tx = null;
             String responseString = "\nconnected to server - " + time + "\n";
             output.write(responseString.getBytes());
 
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(input), 1024);
 
-            String queryString = "{\"type\": \"init\",\"database\": \"dbname\"}";
+            String queryString = "";
             String tempString ;
             while((tempString = bufferedReader.readLine()) != null){
                 tempString = tempString.trim();
@@ -56,6 +57,31 @@ public class WorkerRunnable implements Runnable {
                             create.handleCreate();
                             output.write("created database".getBytes());
                         }
+                        if(query.getQuery().type.equals("transaction")){
+                            if(query.getQuery().transaction.equals("begin")){
+                                if(tx == null){
+                                    tx = new Transaction();
+                                }else {
+                                    output.write("transaction is already running".getBytes());
+                                }
+                            }else if(query.getQuery().transaction.equals("commit")){
+                                if(tx == null){
+                                    output.write("no transaction is running".getBytes());
+                                }else {
+                                    tx.commit();
+                                    tx = null;
+                                }
+                            }
+                            else if(query.getQuery().transaction.equals("abort")){
+
+                                if(tx == null){
+                                    output.write("no transaction is running".getBytes());
+                                }else {
+                                    tx.abort();
+                                    tx = null;
+                                }
+                            }
+                        }
                     }catch (FileAlreadyExistsException e){
                         output.write("database already present".getBytes());
                         e.printStackTrace();
@@ -65,10 +91,14 @@ public class WorkerRunnable implements Runnable {
                     }
 
                     if(!(query.getQuery().type.equals("init") || query.getQuery().type.equals("create"))) {
-                        Planner planner = new Planner(query.getQuery(), query.getPredicate());
+                        if(tx == null){
+                            tx = new Transaction();
+                        }
+                        Planner planner = new Planner(query.getQuery(), query.getPredicate(), tx);
 
-                        Executor executor = new Executor(planner.getplan(), output);
+//                        individual query has to be treated as a transaction
 
+                        Executor executor = new Executor(planner.getplan(), output, tx);
                         executor.run();
                     }
                 }

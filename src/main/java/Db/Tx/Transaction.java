@@ -43,7 +43,7 @@ public class Transaction {
                 pagesLocked.add(pageID);
                 return;
             }else {
-//                check for deadlocks
+//                improve logic of which transaction gets aborted
                 if(detectDeadLocks()){
                     abort();
                 }

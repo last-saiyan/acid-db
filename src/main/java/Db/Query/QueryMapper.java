@@ -14,4 +14,6 @@ public class QueryMapper {
 
     public String where;
 
+    public String transaction;
+
 }

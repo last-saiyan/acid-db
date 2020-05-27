@@ -18,14 +18,14 @@ public class LockTable {
     private HashMap<Integer, Set<Integer>> PIDSharedLock;
 
 //    map of transaction id that is waiting to lock page id
+    private HashMap<Integer, Set<Integer>> tIDWaiting;
 
-    private HashMap<Integer, Integer> TIDWaitingforSLocks;
-    private HashMap<Integer, Integer> TIDWaitingforXLocks;
 
 
     public LockTable(){
         PIDExclusiveLock = new HashMap<>();
         PIDSharedLock = new HashMap<>();
+        tIDWaiting = new HashMap<>();
     }
 
 
@@ -39,11 +39,10 @@ public class LockTable {
 
 //        if same transaction holds exclusive lock on page return true else false
         if (PIDExclusiveLock.containsKey(pageID)){
-
             if(PIDExclusiveLock.get(pageID) == transactionID){
                 return true;
             }
-            addToWaitingList(transactionID, pageID, perm);
+            addToWaitingList(transactionID, pageID);
 //            wait till the other transaction is completed
             System.out.println("page - " +  pageID + " is held by exclusive lock by transaction - " + transactionID);
             return false;
@@ -62,18 +61,18 @@ public class LockTable {
                 TID.add(pageID);
                 PIDSharedLock.put(pageID, TID);
             }
-            removeFromWaitingList(transactionID, perm);
+            removeFromWaitingList(transactionID);
             return true;
         }else {
 
             if(PIDSharedLock.containsKey(pageID)){
 //                wait till the other transaction is completed
                 System.out.println("page - " +  pageID + " is held by shared lock by transaction - " + transactionID);
-                addToWaitingList(transactionID, pageID, perm);
+                addToWaitingList(transactionID, pageID);
                 return false;
             }
             PIDExclusiveLock.put(pageID, transactionID);
-            removeFromWaitingList(transactionID, perm);
+            removeFromWaitingList(transactionID);
             return true;
         }
     }
@@ -81,45 +80,74 @@ public class LockTable {
 
     /*
     *
+    * adds transactionId to waiting graph
+    * it looks at other pages
     * */
-    private void addToWaitingList(int transactionID, int pageID, Permission perm){
-        if(perm == Permission.SHARED){
-            TIDWaitingforSLocks.put(transactionID, pageID);
+    private void addToWaitingList(int transactionID, int pageID){
+        Set<Integer> waitingTidSet;
+        if(PIDExclusiveLock.containsKey(pageID)){
+            if(tIDWaiting.containsKey(transactionID)){
+                waitingTidSet = tIDWaiting.get(transactionID);
+                waitingTidSet.add(PIDExclusiveLock.get(pageID));
+            }else {
+                waitingTidSet = new HashSet<>();
+                waitingTidSet.add(PIDExclusiveLock.get(pageID));
+            }
         }else {
-            TIDWaitingforXLocks.put(transactionID, pageID);
+            if(tIDWaiting.containsKey(transactionID)){
+                waitingTidSet = tIDWaiting.get(transactionID);
+                waitingTidSet.addAll(PIDSharedLock.get(pageID));
+            }else {
+                waitingTidSet = PIDSharedLock.get(pageID);
+            }
         }
+        tIDWaiting.put(transactionID, waitingTidSet);
     }
 
 
     /*
-    * if transaction is present
+    * this updates the lock waiting list
+    * to be called at end of transaction
+    * commit or abort
     * */
-    private void removeFromWaitingList(int transactionID, Permission perm){
-        if(perm == Permission.SHARED){
-            if(TIDWaitingforSLocks.containsKey(transactionID)){
-                TIDWaitingforSLocks.remove(transactionID);
-            }
-        }else {
-            if(TIDWaitingforXLocks.containsKey(transactionID)){
-                TIDWaitingforXLocks.remove(transactionID);
+    private void removeFromWaitingList(int transactionID){
+        if(tIDWaiting.containsKey(transactionID)){
+            tIDWaiting.remove(transactionID);
+        }
+        for(Integer currTID : tIDWaiting.keySet()){
+            if(tIDWaiting.get(currTID).contains(transactionID)){
+                tIDWaiting.get(currTID).remove(transactionID);
             }
         }
     }
 
 
-    //            get the pageid that has to be locked
-//            check if other transaction is waiting for this
-//            and check if other is transaction is also waiting for lock on a page
-//            held by this transactionID
 
+    /*
+    *
+    * look for loop in tIDWaiting
+    * if transactionID is waiting on another transaction tempTid
+    * and tempTid is waiting for transactionID return true
+    *
+    * */
     public boolean detectDeadLock(int transactionID){
 
+        if(tIDWaiting.containsKey(transactionID)){
 
-
-        return false;
-    }
-
-    boolean transactionHoldsLock(int transactionID, int pageID){
+            Set<Integer> waitingTidSet = tIDWaiting.get(transactionID);
+//            check if any ID in waitingTidSet is waiting for transactionID
+            Iterator<Integer> tIDIter = waitingTidSet.iterator();
+            while (tIDIter.hasNext()){
+                int tempTid = tIDIter.next();
+                if (tIDWaiting.containsKey(tempTid)) {
+                    Set<Integer> tempTidSet = tIDWaiting.get(tempTid);
+//                    cycle is detected
+                    if(tempTidSet.contains(transactionID)){
+                        return true;
+                    }
+                }
+            }
+        }
 
         return false;
     }
@@ -156,9 +184,7 @@ public class LockTable {
         }
 
 //        this is called to free up map, if the transaction is aborted
-        removeFromWaitingList(transactionID, Permission.SHARED);
-        removeFromWaitingList(transactionID, Permission.EXCLUSIVE);
-
+        removeFromWaitingList(transactionID);
     }
 
 
