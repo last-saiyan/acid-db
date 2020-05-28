@@ -60,7 +60,7 @@ public class WorkerRunnable implements Runnable {
                         if(query.getQuery().type.equals("transaction")){
                             if(query.getQuery().transaction.equals("begin")){
                                 if(tx == null){
-                                    tx = new Transaction();
+                                    tx = new Transaction(false);
                                 }else {
                                     output.write("transaction is already running".getBytes());
                                 }
@@ -92,14 +92,19 @@ public class WorkerRunnable implements Runnable {
 
                     if(!(query.getQuery().type.equals("init") || query.getQuery().type.equals("create"))) {
                         if(tx == null){
-                            tx = new Transaction();
+                            tx = new Transaction(true);
                         }
                         Planner planner = new Planner(query.getQuery(), query.getPredicate(), tx);
 
 //                        individual query has to be treated as a transaction
 
-                        Executor executor = new Executor(planner.getplan(), output, tx);
+                        Executor executor = new Executor(planner.getplan(), output);
                         executor.run();
+
+                        if(!tx.isExplicit()){
+                            tx.commit();
+                        }
+
                     }
                 }
 

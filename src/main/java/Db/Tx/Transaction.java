@@ -17,16 +17,21 @@ public class Transaction {
     private static LockTable lockManager = new LockTable();
     private Set<Integer> pagesSLocked;
     private Set<Integer> pagesXLocked;
+    private boolean explicit;
 
 
-
-    public Transaction(){
+    public Transaction(boolean explicit){
         pagesSLocked = new HashSet<>();
         pagesXLocked = new HashSet<>();
         incrementID();
+        this.explicit = explicit;
     }
 
 
+
+    public boolean isExplicit(){
+        return explicit;
+    }
 
     /*
     * acquires lock for a page
@@ -36,10 +41,11 @@ public class Transaction {
     * check for deadlock ?
     * abort the transaction
     * */
-    public synchronized void lockPage(int pageID, Permission perm) throws InterruptedException {
+    public void lockPage(int pageID, Permission perm) throws InterruptedException {
 
         if(!lockManager.grantLock(pageID, tID, perm)) {
             int timeout = 5000;
+//            research about alternative approach
             Thread.sleep(timeout);
 
             if(lockManager.grantLock(pageID, tID, perm)){
@@ -73,7 +79,7 @@ public class Transaction {
     /*
     * checks if transaction holds lock on page with required permission
     * */
-    public synchronized boolean holdsLock(int pageID, Permission perm){
+    public boolean holdsLock(int pageID, Permission perm){
         if(pagesXLocked.contains(pageID)){
             return true;
         }

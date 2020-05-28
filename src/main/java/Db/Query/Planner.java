@@ -61,7 +61,7 @@ public class Planner {
 
         DbIterator iter = new InsertIterator(query.values, Acid.getDatabase().tupleDesc);
 
-        return new Insertion(iter, bfManager);
+        return new Insertion(iter, bfManager, tx);
 
     }
     private DbIterator deleteIterator(QueryMapper query, Predicate predicate){
