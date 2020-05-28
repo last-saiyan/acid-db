@@ -1,10 +1,15 @@
 package Db.bufferManager;
 
 import Db.Acid;
+import Db.Tx.Permission;
+import Db.Tx.Transaction;
 import Db.Utils;
 import Db.catalog.Tuple;
 import Db.diskManager.Page;
 import Db.diskManager.DiskManager;
+
+import java.util.Iterator;
+import java.util.Set;
 
 public class Manager {
 
@@ -108,27 +113,50 @@ public class Manager {
     *
     * */
 
-    public void insertTuple(Tuple tuple){
+    public void insertTuple(Tuple tuple, Transaction tx) throws InterruptedException {
         int i = 0;
         Page tempPage = bufferPool[0];
 
         boolean found = false;
-        while (i < bufferPool.length){
+//        check if transaction holds exclusive lock on page and
+//        page has space and page is in buffer pool
+
+        Set<Integer> pageIDSet = tx.getPagesXLocked();
+        Iterator<Integer> pageIDSetIterator = pageIDSet.iterator();
+
+        while (pageIDSetIterator.hasNext()){
+            i = getBufferPoolPageInd(pageIDSetIterator.next());
+            if((i != -1) &&
+                    (bufferPool[i].pageDataCapacity < tuple.size() + tempPage.pageSize())
+            ){
+                replacer.updateEntry(i);
+                found = true;
+                break;
+            }
+        }
+
+        while (!found && i < bufferPool.length){
             tempPage = bufferPool[i];
-            if(tempPage != null && tempPage.pageDataCapacity < tuple.size() + tempPage.pageSize()){
+
+            if(
+                    (tempPage != null) &&
+                    (tempPage.pageDataCapacity < tuple.size() + tempPage.pageSize()) &&
+                    tx.canLockPage(tempPage.getHeader("id"), Permission.EXCLUSIVE)
+            ){
                 replacer.updateEntry(i);
                 found = true;
                 break;
             }
             i++;
         }
+
         if(found == true){
             tempPage = bufferPool[i];
         }else {
-            tempPage = insertNewPage();
+            tempPage = insertNewPage(tx);
         }
-        tempPage.insertTuple(tuple);
 
+        tempPage.insertTuple(tuple);
     }
 
 
@@ -139,16 +167,18 @@ public class Manager {
     * in the bufferPool (all pages are filled)
     *
     * */
-    public Page insertNewPage(){
+    public synchronized Page insertNewPage(Transaction tx) throws InterruptedException {
         int buffPoolInd = replacer.pickVictim();
 
         Page page = diskManager.getNewPage();
         if(pageMapping[buffPoolInd]!= null && pageMapping[buffPoolInd].dirty){
             flushPageToDisk(buffPoolInd);
         }
+
         bufferPool[buffPoolInd] = page;
         pageMapping[buffPoolInd].pinCounter++;
         pageMapping[buffPoolInd].pId = page.getHeader("id");
+        tx.lockPage(page.getHeader("id"), Permission.EXCLUSIVE);
 
         replacer.updateEntry(buffPoolInd);
         return bufferPool[buffPoolInd];
@@ -164,14 +194,15 @@ public class Manager {
     * if all pages in bufferpool is pinned
     * it throws a exception
     * */
-    public Page getPage(int pId){
+    public Page getPage(int pId, Transaction tx, Permission perm) throws InterruptedException {
+        tx.lockPage(pId, perm);
+//        below lines of code will not be executed if lock is not obtained
         int bufferPoolInd = pinPage(pId);
         if(bufferPoolInd != -1){
             return bufferPool[bufferPoolInd];
         }else{
-//            throw exception
+            throw new RuntimeException("all pages in buffer pool is pinned");
         }
-        return null;
     }
 
 

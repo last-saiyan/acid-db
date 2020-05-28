@@ -83,7 +83,7 @@ public class LockTable {
     * adds transactionId to waiting graph
     * it looks at other pages
     * */
-    private void addToWaitingList(int transactionID, int pageID){
+    private synchronized void addToWaitingList(int transactionID, int pageID){
         Set<Integer> waitingTidSet;
         if(PIDExclusiveLock.containsKey(pageID)){
             if(tIDWaiting.containsKey(transactionID)){
@@ -110,7 +110,7 @@ public class LockTable {
     * to be called at end of transaction
     * commit or abort
     * */
-    private void removeFromWaitingList(int transactionID){
+    private synchronized void removeFromWaitingList(int transactionID){
         if(tIDWaiting.containsKey(transactionID)){
             tIDWaiting.remove(transactionID);
         }
@@ -123,6 +123,36 @@ public class LockTable {
 
 
 
+    public synchronized boolean canLockPage(int pageID, int transactionID, Permission perm){
+
+        if (perm == Permission.SHARED){
+            if(PIDExclusiveLock.containsKey(pageID)){
+                return false;
+            }
+            if(!PIDSharedLock.containsKey(pageID)){
+                Set<Integer> TID = PIDSharedLock.get(pageID);
+                if(!TID.contains(transactionID)){
+                    TID.add(transactionID);
+                }
+                PIDSharedLock.put(pageID, TID);
+            }
+            return true;
+        }else {
+            if(
+                    (PIDExclusiveLock.containsKey(pageID)) ||
+                    (PIDSharedLock.containsKey(pageID))
+            ){
+                return false;
+            }
+            if(!PIDExclusiveLock.containsKey(pageID)){
+                PIDExclusiveLock.put(pageID, transactionID);
+            }
+
+            return true;
+        }
+    }
+
+
     /*
     *
     * look for loop in tIDWaiting
@@ -130,7 +160,7 @@ public class LockTable {
     * and tempTid is waiting for transactionID return true
     *
     * */
-    public boolean detectDeadLock(int transactionID){
+    public synchronized boolean detectDeadLock(int transactionID){
 
         if(tIDWaiting.containsKey(transactionID)){
 

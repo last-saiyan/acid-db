@@ -1,5 +1,7 @@
 package Db.iterator;
 
+import Db.Tx.Permission;
+import Db.Tx.Transaction;
 import Db.bufferManager.Manager;
 import Db.catalog.Tuple;
 import Db.diskManager.DiskManager;
@@ -16,11 +18,15 @@ public class HeapFileIterator {
     int pageCount;
     Page currentPage;
     DiskManager dskMgr;
+    Transaction tx;
+    Permission perm;
 
-    public HeapFileIterator(Manager mgr,DiskManager dskMgr){
+    public HeapFileIterator(Manager mgr, DiskManager dskMgr, Transaction tx, Permission perm){
         bfPoolManager = mgr;
         pageCount = 0;
         this.dskMgr = dskMgr;
+        this.tx = tx;
+        this.perm = perm;
     }
 
 
@@ -39,7 +45,7 @@ public class HeapFileIterator {
 
 
     public Page getNextPage(){
-        return bfPoolManager.getPage(pageCount);
+        return bfPoolManager.getPage(pageCount, tx, perm);
     }
 
 }

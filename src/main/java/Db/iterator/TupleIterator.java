@@ -1,6 +1,7 @@
 package Db.iterator;
 
 import Db.Acid;
+import Db.Tx.Transaction;
 import Db.Utils;
 import Db.query.Predicate;
 import Db.diskManager.Page;

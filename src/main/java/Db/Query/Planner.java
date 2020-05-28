@@ -1,6 +1,8 @@
 package Db.query;
 
 import Db.Acid;
+import Db.Tx.Permission;
+import Db.Tx.Transaction;
 import Db.bufferManager.Manager;
 import Db.diskManager.DiskManager;
 import Db.iterator.*;
@@ -10,11 +12,14 @@ public class Planner {
     private Predicate predicate;
     private Manager bfManager;
     private DiskManager dskMgr;
-    public Planner(QueryMapper query, Predicate predicate){
+    private Transaction tx;
+
+    public Planner(QueryMapper query, Predicate predicate, Transaction tx){
         this.query = query;
         this.predicate = predicate;
         bfManager = Acid.getDatabase().bufferPoolManager;
         dskMgr = Acid.getDatabase().diskManager;
+        this.tx = tx;
     }
 
     public DbIterator getplan(){
@@ -36,7 +41,7 @@ public class Planner {
     private DbIterator selectIterator(QueryMapper query, Predicate predicate){
 //      get these from a static class
 
-        HeapFileIterator pageIter = new HeapFileIterator(bfManager, dskMgr);
+        HeapFileIterator pageIter = new HeapFileIterator(bfManager, dskMgr, tx, Permission.SHARED);
 
         DbIterator iter = new TupleIterator(pageIter, predicate);
 
@@ -46,7 +51,7 @@ public class Planner {
 
     private DbIterator updateIterator(QueryMapper query, Predicate predicate){
 //      get these from a static class
-        HeapFileIterator pageIter = new HeapFileIterator(bfManager, dskMgr);
+        HeapFileIterator pageIter = new HeapFileIterator(bfManager, dskMgr, tx, Permission.EXCLUSIVE);
         DbIterator iter = new TupleIterator(pageIter, predicate);
 //        correct this later implement new operator
         return null;
@@ -55,6 +60,7 @@ public class Planner {
     private DbIterator insertIterator(QueryMapper query){
 
         DbIterator iter = new InsertIterator(query.values, Acid.getDatabase().tupleDesc);
+
         return new Insertion(iter, bfManager);
 
     }
@@ -62,7 +68,7 @@ public class Planner {
 
 //      get these from a static class
 
-        HeapFileIterator pageIter = new HeapFileIterator(bfManager, dskMgr);
+        HeapFileIterator pageIter = new HeapFileIterator(bfManager, dskMgr, tx, Permission.EXCLUSIVE);
         DbIterator iter = new TupleIterator(pageIter, predicate);
         return new Deletion(iter);
 

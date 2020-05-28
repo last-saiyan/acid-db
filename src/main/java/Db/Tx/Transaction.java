@@ -15,11 +15,14 @@ public class Transaction {
 
     private static int tID = 0;
     private static LockTable lockManager = new LockTable();
-    private Set<Integer> pagesLocked;
+    private Set<Integer> pagesSLocked;
+    private Set<Integer> pagesXLocked;
+
 
 
     public Transaction(){
-        pagesLocked = new HashSet<>();
+        pagesSLocked = new HashSet<>();
+        pagesXLocked = new HashSet<>();
         incrementID();
     }
 
@@ -40,7 +43,11 @@ public class Transaction {
             Thread.sleep(timeout);
 
             if(lockManager.grantLock(pageID, tID, perm)){
-                pagesLocked.add(pageID);
+                if(perm == Permission.SHARED) {
+                    pagesSLocked.add(pageID);
+                }else {
+                    pagesXLocked.add(pageID);
+                }
                 return;
             }else {
 //                improve logic of which transaction gets aborted
@@ -49,10 +56,37 @@ public class Transaction {
                 }
             }
         }else{
-            pagesLocked.add(pageID);
+            if(perm == Permission.SHARED) {
+                pagesSLocked.add(pageID);
+            }else {
+                pagesXLocked.add(pageID);
+            }
         }
     }
 
+
+    public Set<Integer> getPagesXLocked(){
+        return pagesXLocked;
+    }
+
+
+    /*
+    * checks if transaction holds lock on page with required permission
+    * */
+    public synchronized boolean holdsLock(int pageID, Permission perm){
+        if(pagesXLocked.contains(pageID)){
+            return true;
+        }
+        if(perm == Permission.SHARED && pagesSLocked.contains(pageID)){
+            return true;
+        }
+        return false;
+    }
+
+
+    public boolean canLockPage(int pageID, Permission perm){
+        return lockManager.canLockPage(pageID, tID, perm);
+    }
 
     /*
     * checks if there is a cycle in graph
@@ -73,6 +107,7 @@ public class Transaction {
 
 
 
+
     /*
     * following strict 2pl
     * this is called after transaction is committed
@@ -80,7 +115,8 @@ public class Transaction {
     * */
 
     public void releaseAllLocks(){
-        lockManager.releaseAllLock(tID, pagesLocked);
+        pagesSLocked.addAll(pagesXLocked);
+        lockManager.releaseAllLock(tID, pagesSLocked);
     }
 
 

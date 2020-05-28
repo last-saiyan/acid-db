@@ -1,5 +1,6 @@
 package Db.iterator;
 
+import Db.Tx.Transaction;
 import Db.catalog.Field;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
