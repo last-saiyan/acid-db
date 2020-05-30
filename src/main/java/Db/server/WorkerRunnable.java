@@ -60,7 +60,7 @@ public class WorkerRunnable implements Runnable {
                         if(query.getQuery().type.equals("transaction")){
                             if(query.getQuery().transaction.equals("begin")){
                                 if(tx == null){
-                                    tx = new Transaction(false);
+                                    tx = new Transaction(true);
                                 }else {
                                     output.write("transaction is already running".getBytes());
                                 }
@@ -92,7 +92,7 @@ public class WorkerRunnable implements Runnable {
 
                     if(!(query.getQuery().type.equals("init") || query.getQuery().type.equals("create"))) {
                         if(tx == null){
-                            tx = new Transaction(true);
+                            tx = new Transaction(false);
                         }
                         Planner planner = new Planner(query.getQuery(), query.getPredicate(), tx);
 
