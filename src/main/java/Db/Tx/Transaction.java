@@ -18,13 +18,14 @@ public class Transaction {
     private Set<Integer> pagesSLocked;
     private Set<Integer> pagesXLocked;
     private boolean explicit;
-
+    private Recovery recoveryManager;
 
     public Transaction(boolean explicit){
         pagesSLocked = new HashSet<>();
         pagesXLocked = new HashSet<>();
         incrementID();
         this.explicit = explicit;
+        recoveryManager = new Recovery(tID);
     }
 
 
@@ -129,6 +130,7 @@ public class Transaction {
     public void commit(){
 //        need to do more work here
         releaseAllLocks();
+        recoveryManager.commit();
     }
 
 
@@ -136,6 +138,7 @@ public class Transaction {
     public void abort(){
 //        need to do more work here
         releaseAllLocks();
+        recoveryManager.abort();
     }
 
 }
