@@ -27,12 +27,11 @@ public class LogRecord {
         return null;
     }
 
+
     public LogRecord decodeLog(){
 
         return null;
     }
-
-
 
 
 }

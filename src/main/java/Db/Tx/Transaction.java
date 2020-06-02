@@ -18,14 +18,15 @@ public class Transaction {
     private Set<Integer> pagesSLocked;
     private Set<Integer> pagesXLocked;
     private boolean explicit;
-    private Recovery recoveryManager;
+    private static Recovery recoveryManager = new Recovery();
+    private int prevLsn = 0;
 
     public Transaction(boolean explicit){
         pagesSLocked = new HashSet<>();
         pagesXLocked = new HashSet<>();
         incrementID();
         this.explicit = explicit;
-        recoveryManager = new Recovery(tID);
+        recoveryManager.newTransaction(tID);
     }
 
 
@@ -33,6 +34,7 @@ public class Transaction {
     public boolean isExplicit(){
         return explicit;
     }
+
 
     /*
     * acquires lock for a page
@@ -95,6 +97,7 @@ public class Transaction {
         return lockManager.canLockPage(pageID, tID, perm);
     }
 
+
     /*
     * checks if there is a cycle in graph
     * */
@@ -108,11 +111,21 @@ public class Transaction {
     }
 
 
-    static synchronized void incrementID(){
-        tID++;
+
+    /*
+    * when this is called return the lsn
+    * lsn is used to update the page LSN
+    * */
+    public int addLogRecord(LogRecord record){
+        record.prevLsn = prevLsn;
+        prevLsn = recoveryManager.addLogRecord(record, tID);
+        return prevLsn;
     }
 
 
+    static synchronized void incrementID(){
+        tID++;
+    }
 
 
     /*
@@ -130,7 +143,7 @@ public class Transaction {
     public void commit(){
 //        need to do more work here
         releaseAllLocks();
-        recoveryManager.commit();
+        recoveryManager.commit(tID);
     }
 
 
@@ -138,7 +151,7 @@ public class Transaction {
     public void abort(){
 //        need to do more work here
         releaseAllLocks();
-        recoveryManager.abort();
+        recoveryManager.abort(tID);
     }
 
 }
