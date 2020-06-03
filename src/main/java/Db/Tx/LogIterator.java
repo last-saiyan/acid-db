@@ -42,6 +42,9 @@ public class LogIterator {
 
 
     public LogRecord next(){
+        int headerSize = 0;
+        int recordSize = 0;
+        int count = page.getHeader("count");
 
 
         return null;
