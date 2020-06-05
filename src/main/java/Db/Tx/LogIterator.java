@@ -1,21 +1,25 @@
 package Db.Tx;
 
-import Db.diskManager.Page;
 
-import java.io.File;
+import java.io.IOException;
 
 public class LogIterator {
 
-    File logFile;
     int pageIndex;
     int logID;
     boolean direction;
     LogRecordPage page;
+    int recordIndexInPage;
+    int recordSize;
+    LogRecord current;
+
+
     /*
     * if direction is false
     * it iterates from last to first
     * */
-    public LogIterator(boolean direction){
+    public LogIterator(boolean direction) throws IOException {
+        recordSize = LogRecord.size(null);
         logID = 0;
         this.direction = direction;
         if(direction){
@@ -29,30 +33,66 @@ public class LogIterator {
 
 
     public void reset(){
-
-
+        pageIndex = 0;
     }
 
 
-    public boolean hasNext(){
-
-        return false;
+    public boolean hasNext() throws IOException {
+        if(current == null){
+            current = next();
+        }
+        if(current== null){
+            return false;
+        }else {
+            return true;
+        }
     }
 
 
+    public LogRecord next() throws IOException {
+        if(current == null) {
+            current = getNext();
+        }
+        LogRecord tempRecord = current;
+        current = null;
+        return tempRecord;
+    }
 
-    public LogRecord next(){
+
+    private LogRecord getNext() throws IOException {
         int headerSize = 0;
         int recordSize = 0;
         int count = page.getHeader("count");
 
-
+        if(recordIndexInPage < count) {
+            byte[] data = page.getData();
+            byte[] logRecordData = new byte[recordSize];
+            int offset = recordIndexInPage*recordSize;
+            System.arraycopy(data,offset, logRecordData, 0, logRecordData.length);
+            recordIndexInPage++;
+            new LogRecord(null, logRecordData);
+        } else if(hasNextPage()){
+            page = getNextPage();
+            recordIndexInPage = 0;
+            byte[] data = page.getData();
+            int offset = recordIndexInPage*recordSize;
+            byte[] logRecordData = new byte[recordSize];
+            System.arraycopy(data,offset, logRecordData, 0, logRecordData.length);
+            recordIndexInPage++;
+        }
         return null;
     }
 
 
+    private boolean hasNextPage() throws IOException {
+        if(pageIndex < LogRecordPage.pageCount()){
+            return true;
+        }
 
-    private LogRecordPage getNextPage(){
+        return false;
+    }
+
+    private LogRecordPage getNextPage() throws IOException {
 
         if(direction){
             pageIndex++;
