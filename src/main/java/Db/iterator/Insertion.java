@@ -1,5 +1,6 @@
 package Db.iterator;
 
+import Db.Tx.LogRecord;
 import Db.Tx.Transaction;
 import Db.bufferManager.Manager;
 import Db.catalog.Tuple;

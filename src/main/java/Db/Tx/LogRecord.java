@@ -1,8 +1,9 @@
 package Db.Tx;
 
-import Db.Tuples.Tuple;
 import Db.Utils;
 import Db.catalog.TupleDesc;
+
+import java.io.IOException;
 
 public class LogRecord {
 
@@ -11,24 +12,50 @@ public class LogRecord {
 
     int pageID;
     int tId;
-    public static int update = 1;
-    public static int delete = 1;
-    public static int commit = 1;
-    public static int rollback = 1;
+    public static int insert = 1;
+    public static int update = 2;
+    public static int delete = 3;
+    public static int commit = 4;
+    public static int clr = 5;
     byte[] prevByte;
     byte[] nextByte;
     int logtype;
+    int offset;
+    static TupleDesc td;
 
-    public LogRecord(int prevLsn, int logtype, byte[] prev, byte[] next, int pageID, int tId){
+
+    public LogRecord(int prevLsn, int logtype, byte[] prev, byte[] next, int pageID, int tId, int offset){
         this.prevLsn = prevLsn;
         this.logtype = logtype;
         this.pageID = pageID;
         this.tId = tId;
         prevByte = prev;
         nextByte = next;
+        this.offset = offset;
     }
 
-    public LogRecord(TupleDesc td, byte[] data){
+
+    static void setTupleDesc(TupleDesc tupleDesc){
+        td = tupleDesc;
+    }
+
+
+    public LogRecord(int lsn) throws IOException {
+        int pageCapacity = Utils.pageSize/size();
+
+        int pageIdD = lsn/pageCapacity;
+
+        LogRecordPage page = LogRecordPage.getPage(pageIdD);
+        int recordId = lsn%pageCapacity;
+
+        int pageOffset = recordId*size();
+        byte[] recordData = new byte[size()];
+        System.arraycopy(page.pageData, offset, recordData, 0, recordData.length);
+        new LogRecord(recordData);
+
+    }
+
+    public LogRecord(byte[] data){
         byte[] intByte = new byte[4];
 
         System.arraycopy(data, 0, intByte, 0, 4);
@@ -46,12 +73,15 @@ public class LogRecord {
         System.arraycopy(data, 20, intByte, 0, 4);
         tId = Utils.byteToInt(intByte);
 
+        System.arraycopy(data, 24, intByte, 0, 4);
+        offset = Utils.byteToInt(intByte);
+
         byte[] prevByte = new byte[td.tupleSize()];
-        System.arraycopy(data, 20, prevByte, 0, td.tupleSize());
+        System.arraycopy(data, 28, prevByte, 0, td.tupleSize());
         this.prevByte = prevByte;
 
         byte[] nextByte = new byte[td.tupleSize()];
-        System.arraycopy(data, (20+td.tupleSize()), nextByte, 0, td.tupleSize());
+        System.arraycopy(data, (28+td.tupleSize()), nextByte, 0, td.tupleSize());
         this.nextByte = nextByte;
 
     }
@@ -66,8 +96,8 @@ public class LogRecord {
     * todo - find better way to do this if number of items increases
     *
     * */
-    public byte[] encodeLog(TupleDesc td){
-        byte[] recordData = new byte[size(td)];
+    public byte[] encodeLog(){
+        byte[] recordData = new byte[size()];
         byte[] intByte;
 
         intByte = Utils.intToByte(lsn);
@@ -92,10 +122,9 @@ public class LogRecord {
         return recordData;
     }
 
-    public static int size(TupleDesc td){
+    public static int size(){
 //        20 is the size of other int fields, need to find a better way to do this
         return td.tupleSize()*2 + 20;
     }
-
 
 }

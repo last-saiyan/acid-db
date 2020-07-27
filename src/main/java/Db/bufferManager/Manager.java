@@ -1,6 +1,7 @@
 package Db.bufferManager;
 
 import Db.Acid;
+import Db.Tx.LogRecord;
 import Db.Tx.Permission;
 import Db.Tx.Transaction;
 import Db.Utils;
@@ -8,6 +9,7 @@ import Db.catalog.Tuple;
 import Db.diskManager.Page;
 import Db.diskManager.DiskManager;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -113,7 +115,7 @@ public class Manager {
     *
     * */
 
-    public void insertTuple(Tuple tuple, Transaction tx) throws InterruptedException {
+    public void insertTuple(Tuple tuple, Transaction tx) throws InterruptedException, IOException {
         int i = 0;
         Page tempPage = bufferPool[0];
 
@@ -155,7 +157,9 @@ public class Manager {
         }else {
             tempPage = insertNewPage(tx);
         }
-
+        LogRecord insertLogRecord = new LogRecord(tx.getPrevLsn(), LogRecord.insert, null, tuple.getBytes(), tempPage.getHeader("id"), tx.getTID(), tempPage.getHeader("size"));
+        int lsn = tx.addLogRecord(insertLogRecord);
+        tempPage.setLsn(lsn);
         tempPage.insertTuple(tuple);
     }
 
@@ -167,7 +171,7 @@ public class Manager {
     * in the bufferPool (all pages are filled)
     *
     * */
-    public synchronized Page insertNewPage(Transaction tx) throws InterruptedException {
+    public synchronized Page insertNewPage(Transaction tx) throws InterruptedException, IOException {
         int buffPoolInd = replacer.pickVictim();
 
         Page page = diskManager.getNewPage();
@@ -194,7 +198,7 @@ public class Manager {
     * if all pages in bufferpool is pinned
     * it throws a exception
     * */
-    public Page getPage(int pId, Transaction tx, Permission perm) throws InterruptedException {
+    public Page getPage(int pId, Transaction tx, Permission perm) throws InterruptedException, IOException {
         tx.lockPage(pId, perm);
 //        below lines of code will not be executed if lock is not obtained
         int bufferPoolInd = pinPage(pId);

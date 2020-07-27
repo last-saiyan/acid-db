@@ -1,5 +1,6 @@
 package Db.Tx;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -44,7 +45,7 @@ public class Transaction {
     * check for deadlock ?
     * abort the transaction
     * */
-    public void lockPage(int pageID, Permission perm) throws InterruptedException {
+    public void lockPage(int pageID, Permission perm) throws InterruptedException, IOException {
 
         if(!lockManager.grantLock(pageID, tID, perm)) {
             int timeout = 5000;
@@ -122,6 +123,10 @@ public class Transaction {
         return prevLsn;
     }
 
+    public int getPrevLsn(){
+        return prevLsn;
+    }
+
 
     static synchronized void incrementID(){
         tID++;
@@ -148,7 +153,7 @@ public class Transaction {
 
 
 
-    public void abort(){
+    public void abort() throws IOException {
 //        need to do more work here
         releaseAllLocks();
         recoveryManager.abort(tID);

@@ -26,7 +26,6 @@ public class LogRecordPage {
     }
 
     public LogRecordPage(byte[] data){
-
         pageData = data;
     }
 
@@ -38,13 +37,13 @@ public class LogRecordPage {
 
 
     public boolean addLogRecord(LogRecord logRecord){
-        byte[] recordData = logRecord.encodeLog(null);
+        byte[] recordData = logRecord.encodeLog();
 
         int recordCount = getHeader("count");
 //        find better approach as the header can be updated
         int headerSize = headers.size()*4;
-        int offset = headerSize + recordCount*LogRecord.size(null);
-        if((recordCount*LogRecord.size(null) +
+        int offset = headerSize + recordCount*LogRecord.size();
+        if((recordCount*LogRecord.size() +
                 recordData.length + headerSize) < pageSize){
 
             System.arraycopy(recordData, 0, pageData, offset, recordData.length);
@@ -55,10 +54,10 @@ public class LogRecordPage {
     }
 
 
-    public byte[] getData(){
+    private byte[] encodePageData(){
         int headerSize = headers.size();
         int recordCount = getHeader("count");
-        byte[] data = new byte[recordCount*LogRecord.size(null)];
+        byte[] data = new byte[recordCount*LogRecord.size()];
         System.arraycopy(pageData,headerSize, data, 0, data.length);
         return pageData;
     }
@@ -106,19 +105,18 @@ public class LogRecordPage {
         byte[] data = new byte[Utils.pageSize];
         System.arraycopy(encodeHeader(),0, data, 0, headers.size()*4);
 
-        byte[] pageData = getData();
+        byte[] pageData = encodePageData();
         System.arraycopy(pageData, 0, data, headers.size()*4, pageData.length);
         logRecordFile.write(data);
     }
 
     public static LogRecordPage getPage(int pageID) throws IOException {
+//        todo check if its present
         int offset = pageID*pageSize;
-//        read here
         byte[] pageData = new byte[Utils.pageSize];
         logRecordFile.seek(offset);
         logRecordFile.read(pageData);
-        new LogRecordPage();
-        return null;
+        return new LogRecordPage(pageData);
     }
 
 

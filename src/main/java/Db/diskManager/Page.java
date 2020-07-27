@@ -58,6 +58,8 @@ public class Page implements Utils {
     public TupleDesc getTupleDesc(){
         return this.td;
     }
+
+
     public void insertTuple(Tuple tuple){
         int size = pageHeader.get("size");
         if(tuple.size() + size < pageDataCapacity){
@@ -106,10 +108,16 @@ public class Page implements Utils {
         return header;
     }
 
+    public void setLsn(int lsn){
+        pageHeader.put("LSN", lsn);
+    }
+
+
     public int getHeader(String headerName){
 //        check if the key exists and throw exception
          return this.pageHeader.get(headerName);
     }
+
 
     public int pageSize(){
         return getHeader("size");

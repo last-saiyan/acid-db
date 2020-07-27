@@ -19,7 +19,7 @@ public class LogIterator {
     * it iterates from last to first
     * */
     public LogIterator(boolean direction) throws IOException {
-        recordSize = LogRecord.size(null);
+        recordSize = LogRecord.size();
         logID = 0;
         this.direction = direction;
         if(direction){
@@ -65,16 +65,16 @@ public class LogIterator {
         int count = page.getHeader("count");
 
         if(recordIndexInPage < count) {
-            byte[] data = page.getData();
+            byte[] data = page.pageData;
             byte[] logRecordData = new byte[recordSize];
             int offset = recordIndexInPage*recordSize;
             System.arraycopy(data,offset, logRecordData, 0, logRecordData.length);
             recordIndexInPage++;
-            new LogRecord(null, logRecordData);
+            new LogRecord(logRecordData);
         } else if(hasNextPage()){
             page = getNextPage();
             recordIndexInPage = 0;
-            byte[] data = page.getData();
+            byte[] data = page.pageData;
             int offset = recordIndexInPage*recordSize;
             byte[] logRecordData = new byte[recordSize];
             System.arraycopy(data,offset, logRecordData, 0, logRecordData.length);

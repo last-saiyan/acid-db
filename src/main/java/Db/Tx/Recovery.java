@@ -1,7 +1,16 @@
 package Db.Tx;
 
+import Db.Utils;
+import Db.bufferManager.Manager;
+import Db.catalog.Tuple;
+import Db.catalog.TupleDesc;
+import Db.diskManager.Page;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class Recovery {
     public int lsn = 0;
@@ -15,7 +24,6 @@ public class Recovery {
     public Recovery(){
         logRecordList = new ArrayList<>();
         tIDMapLastLsn = new HashMap<>();
-
     }
 
 
@@ -45,8 +53,29 @@ public class Recovery {
     /*
     * iterates over log records and recreates the database
     * */
-    public void recover(String dbName){
+    public void recover(String dbName, Manager bfPool, Transaction tx, TupleDesc td) throws IOException, InterruptedException {
+        LogRecord.setTupleDesc(td);
+        LogRecordPage.setFile(dbName+ ".log");
+        LogIterator iterator = new LogIterator(true);
+        if(iterator.hasNext()){
+            LogRecord record = iterator.next();
+            Page page = bfPool.getPage(record.pageID, tx, Permission.EXCLUSIVE);
 
+            if(page.getHeader("lsn") < record.lsn){
+                if(record.logtype == LogRecord.insert){
+                    page.insertTuple(new Tuple(record.nextByte, null));
+                }
+                if(record.logtype == LogRecord.update){
+                    page.update(record.offset, new Tuple(record.nextByte, null));
+                }
+                if(record.logtype == LogRecord.delete){
+                    page.deleteTuple(record.offset);
+                }
+                if(record.logtype == LogRecord.clr){
+                    undo(record.tId, record.lsn);
+                }
+            }
+        }
 
     }
 
@@ -54,8 +83,15 @@ public class Recovery {
     /*
     * used when setup to create
     * */
-    public static void setupLogFile(String dbname, boolean isNew){
+    public static void setupLogFile(String dbname, boolean isNew, TupleDesc td) throws IOException {
+        LogRecord.setTupleDesc(td);
         dbName = dbname;
+        if(isNew){
+//            create new log file
+            File logfile = new File (Utils.dbFolderPath +"/"+ dbname + ".log" );
+            logfile.createNewFile();
+        }
+        LogRecordPage.setFile(dbname+ ".log");
     }
 
 
@@ -74,7 +110,7 @@ public class Recovery {
     * adds abort record to logfile
     * undo the changes to the last
     * */
-    public synchronized void abort(int tID){
+    public synchronized void abort(int tID) throws IOException {
         lsn++;
         LogRecord crlRecord = null;
         logRecordList.add(crlRecord);
@@ -89,7 +125,9 @@ public class Recovery {
     * undo the changes to the pages in buffer pool
     * question what should i update the page LSN?
     * */
-    private void undo(int tid, int lsn){
+    private void undo(int tid, int lsn) throws IOException {
+        LogRecord temp = new LogRecord(lsn);
+
 
     }
 
@@ -98,16 +136,17 @@ public class Recovery {
     * flush the log till the given lsn
     * */
     private void writeLogRecord(int lsn){
-        lastwriteLsn = lsn;
+        LogRecordPage page = new LogRecordPage();
 
+        Iterator<LogRecord> iter = logRecordList.iterator();
+        while (iter.hasNext()){
+            iter.next();
+        }
+        while (lastwriteLsn == lsn){
+            lastwriteLsn++;
+            writeLogRecord(lastwriteLsn);
+
+        }
     }
-
-
-    private LogRecordPage getPage(int pageId){
-
-        return null;
-    }
-
-
 
 }
