@@ -45,7 +45,14 @@ public class HeapFileIterator {
 
 
     public Page getNextPage(){
-        return bfPoolManager.getPage(pageCount, tx, perm);
+        Page page = null;
+        try {
+            page = bfPoolManager.getPage(pageCount, tx, perm);
+        } catch (InterruptedException e) {
+//            abort transaction here page not found
+            e.printStackTrace();
+        }
+        return page;
     }
 
 }
