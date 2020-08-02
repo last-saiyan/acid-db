@@ -5,7 +5,6 @@ import Db.catalog.TypesEnum;
 import Db.catalog.Value;
 import Db.query.ExpressionBaseVisitor;
 import Db.query.ExpressionParser;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.HashMap;
 
@@ -19,11 +18,13 @@ public class ExpressionVisitor extends ExpressionBaseVisitor<ExpressionNode> {
         this.tupleMap = tupleMap;
     }
 
+
     /** INT */
     @Override
     public ExpressionNode visitInt(ExpressionParser.IntContext ctx) {
         return new ExpressionNode(Integer.valueOf(ctx.INT().getText()));
     }
+
 
     /** ID */
     @Override
@@ -32,7 +33,7 @@ public class ExpressionVisitor extends ExpressionBaseVisitor<ExpressionNode> {
         if (str.charAt(0)=='\'' && str.charAt(str.length()-1)=='\''){
 //            its a string not field
 //            str = str.substring()
-            return new ExpressionNode(ctx.ID().getText(), "str");
+            return new ExpressionNode(ctx.ID().getText(), TypesEnum.STRING);
         }else {
 //            its a field
             if (fieldMap.containsKey(str)){
@@ -43,7 +44,7 @@ public class ExpressionVisitor extends ExpressionBaseVisitor<ExpressionNode> {
                     return new ExpressionNode(value.getCastValue());
                 }else {
                     Value<String> value = tupleMap.get(str);
-                    return new ExpressionNode(value.getCastValue(), "str");
+                    return new ExpressionNode(value.getCastValue(), TypesEnum.STRING);
                 }
             }else {
                 throw new RuntimeException(str + " is not a field");
@@ -51,29 +52,26 @@ public class ExpressionVisitor extends ExpressionBaseVisitor<ExpressionNode> {
         }
     }
 
+
     /** expr op=('*'|'/') expr */
     @Override
     public ExpressionNode visitMulDiv(ExpressionParser.MulDivContext ctx) {
         ExpressionNode left = visit(ctx.expr(0));  // get value of left subexpression
         ExpressionNode right = visit(ctx.expr(1)); // get value of right subexpression
 
-        if ( !( (left.type == right.type) && (left.type=="int") ) ){
+        if ( !( (left!=null && right!=null) &&  (left.type == right.type) && (left.type==TypesEnum.INTEGER) ) ){
 //            handle other case
             throw new RuntimeException("cant multiply / divide strings");
         }
 
         if ( ctx.op.getType() == ExpressionParser.MUL ){
-            ExpressionNode operatorNode = new ExpressionNode("*", "operator");
-            operatorNode.left = left;
-            operatorNode.right = right;
-            return operatorNode;
+            return new ExpressionNode(left.intValue * right.intValue);
         }
         // must be DIV
-        ExpressionNode operatorNode = new ExpressionNode("/", "operator");
-        operatorNode.left = left;
-        operatorNode.right = right;
-        return operatorNode;
+        return new ExpressionNode(left.intValue / right.intValue);
     }
+
+
 
     /** expr op=('+'|'-') expr */
     @Override
@@ -81,23 +79,18 @@ public class ExpressionVisitor extends ExpressionBaseVisitor<ExpressionNode> {
         ExpressionNode left = visit(ctx.expr(0));  // get value of left subexpression
         ExpressionNode right = visit(ctx.expr(1)); // get value of right subexpression
 
-        if ( !( (left.type == right.type) && (left.type=="int") ) ){
+        if ( !( (left!=null && right!=null) && (left.type == right.type) && (left.type==TypesEnum.INTEGER) ) ){
 //            handle other case
             throw new RuntimeException("cant add / subtract strings");
         }
 
         System.out.println("+" + left.intValue + " - " + right.intValue  );
         if ( ctx.op.getType() == ExpressionParser.ADD ){
-            ExpressionNode operatorNode = new ExpressionNode("+", "operator");
-            operatorNode.left = left;
-            operatorNode.right = right;
-            return operatorNode;
+            return new ExpressionNode(left.intValue + right.intValue);
         }
         // must be sub
-        ExpressionNode operatorNode = new ExpressionNode("-", "operator");
-        operatorNode.left = left;
-        operatorNode.right = right;
-        return operatorNode;
+        return new ExpressionNode(left.intValue - right.intValue);
+
     }
 
 
@@ -107,18 +100,22 @@ public class ExpressionVisitor extends ExpressionBaseVisitor<ExpressionNode> {
         ExpressionNode left = visit(ctx.expr(0));  // get value of left subexpression
         ExpressionNode right = visit(ctx.expr(1)); // get value of right subexpression
 
-        if ( ctx.op.getType() == ExpressionParser.EQ ){
-            ExpressionNode operatorNode = new ExpressionNode("=", "operator");
-            operatorNode.left = left;
-            operatorNode.right = right;
-            return operatorNode;
+        if ( !( (left!=null && right!=null) && (left.type == right.type) && (left.type==TypesEnum.INTEGER) ) ) {
+            throw new RuntimeException("cant compare items");
         }
-        // must be DIV
-        ExpressionNode operatorNode = new ExpressionNode("/", "operator");
-        operatorNode.left = left;
-        operatorNode.right = right;
-        return operatorNode;
+
+        if ( ctx.op.getType() == ExpressionParser.EQ ){
+            boolean output = false;
+            if (left.intValue == right.intValue){
+                output = true;
+            }
+            return new ExpressionNode(output);
+        }
+
+        // todo implement other operators
+        return null;
     }
+
 
     /** '(' expr ')' */
     @Override

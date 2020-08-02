@@ -1,6 +1,8 @@
 package Db.query.predicate;
 
 
+import Db.catalog.TypesEnum;
+
 /*
 * node can be number string or a table field
 *
@@ -13,21 +15,21 @@ public class ExpressionNode extends Node {
     public int intValue;
     public String fieldName;
 
-    public String type; // int, operator, finalValue, str
+    public TypesEnum type; // int, operator, finalValue, str
     boolean finalValue; // final value of the predicate true or false
 
     public ExpressionNode(int intValue){
-        this.type = "int";
+        this.type = TypesEnum.INTEGER;
         this.intValue = intValue;
     }
 
-    public ExpressionNode(String stringValue , String type){
+    public ExpressionNode(String stringValue , TypesEnum type){
         this.type = type;
         this.fieldName = stringValue;
     }
 
     public ExpressionNode(boolean finalValue){
-        this.type = "finalValue";
+        this.type = TypesEnum.BOOLEAN;
         this.finalValue = finalValue;
     }
 
