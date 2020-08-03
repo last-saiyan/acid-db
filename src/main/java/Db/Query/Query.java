@@ -1,6 +1,7 @@
 package Db.query;
 
 import Db.catalog.TupleDesc;
+import Db.query.predicate.Predicate;
 import com.google.gson.Gson;
 
 public class Query {

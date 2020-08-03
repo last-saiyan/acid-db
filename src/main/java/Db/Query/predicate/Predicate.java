@@ -15,14 +15,15 @@ public class Predicate {
     String predicateString;
     private ParseTree tree;
     private ExpressionVisitor visitor;
+    TupleDesc td;
 
-
-    public Predicate(String predicateString){
+    public Predicate(String predicateString, TupleDesc td){
         this.predicateString = predicateString;
+        this.td = td;
     }
 
 
-    public ExpressionNode evaluate(Tuple tuple, TupleDesc td){
+    public ExpressionNode evaluate(Tuple tuple){
         createExpressionTree(td.getFieldMap(), tuple.getMapValue());
         return evaluateTree();
     }
