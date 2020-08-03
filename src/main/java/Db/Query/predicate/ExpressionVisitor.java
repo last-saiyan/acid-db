@@ -7,6 +7,7 @@ import Db.query.ExpressionBaseVisitor;
 import Db.query.ExpressionParser;
 
 import java.util.HashMap;
+import java.util.Map;
 
 
 public class ExpressionVisitor extends ExpressionBaseVisitor<ExpressionNode> {
@@ -83,8 +84,6 @@ public class ExpressionVisitor extends ExpressionBaseVisitor<ExpressionNode> {
 //            handle other case
             throw new RuntimeException("cant add / subtract strings");
         }
-
-        System.out.println("+" + left.intValue + " - " + right.intValue  );
         if ( ctx.op.getType() == ExpressionParser.ADD ){
             return new ExpressionNode(left.intValue + right.intValue);
         }

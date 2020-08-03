@@ -1,45 +1,82 @@
-package Db.Query;
+package Db.query;
 
-import Db.catalog.Field;
-import Db.catalog.TupleDesc;
-import Db.catalog.TypesEnum;
+import Db.catalog.*;
+import Db.query.predicate.ExpressionNode;
+import Db.query.predicate.Predicate;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.StringTokenizer;
+import java.util.HashMap;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PredicateTest {
+
+
+    @Mock
+    Tuple tuple = mock(Tuple.class);
+
+
+
+
+    TupleDesc getTD(){
+
+        ArrayList<Field> fieldArrayList = new ArrayList<>();
+
+        Field f1 = new Field("columnA", TypesEnum.INTEGER, 4);
+        fieldArrayList.add(f1);
+        f1 = new Field("columnB", TypesEnum.INTEGER, 4);
+        fieldArrayList.add(f1);
+
+        TupleDesc td = new TupleDesc(fieldArrayList);
+
+//        try {
+//            td = TupleDesc.deSerializeFromDisk("./dbFile/dbname.cat");
+//        }catch (Exception e){
+//            e.printStackTrace();
+//        }
+//        ArrayList<Field> map = td.getFieldList();
+//        for(int i=0;i< map.size(); i++){
+//            Field field = map.get(i);
+//            System.out.println(field.fieldName + " - " + field.typesEnum+ " _ "+ field.size);
+//        }
+        return td;
+    }
+
+
     @Test
-    void stringTokenizeTest() {
-        String queryString = "{\"type\": \"create\",\"database\": \"dbname\",\"values\": [{\"colName\" :\"column1\",\"value\": \"STRING 30\"},{\"colName\":\"column2\",\"value\": \"INTEGER 4\"}]}\n";
-        Query query = new Query(queryString, null);
+    void testPredicate(){
 
-        ArrayList<ColValue> colNameType = query.getQuery().values;
-        ArrayList<Field> fieldList = new ArrayList();
-        ColValue temp;
-        for (int i = 0; i < colNameType.size(); i++) {
-            temp = colNameType.get(i);
-            String[] valSize = temp.value.split(" ");
-            Field field = new Field(temp.colName, TypesEnum.valueOf(valSize[0]), Integer.parseInt(valSize[1]));
-            fieldList.add(field);
+        HashMap<String, Value> tupleMap = new HashMap<>();
+        Value<Integer> val1 = new IntValue(10);
+        tupleMap.put("columnA", val1);
+        Value<Integer> val2 = new IntValue(20);
+        tupleMap.put("columnB", val2);
 
-        }
+        TupleDesc td = getTD();
+
+        when(tuple.getMapValue()).thenReturn(tupleMap);
 
 
+        Predicate exp = new Predicate("columnA=10");
+        ExpressionNode node = exp.evaluate(tuple, td);
 
-//        String a = "b+c=4";
-//        String b = "b  +c=4";
-//
-//        System.out.println(a.substring(4,5));
+        Predicate exp2 = new Predicate("columnA=20");
+        ExpressionNode node2 = exp2.evaluate(tuple, td);
 
 
-        TupleDesc td = new TupleDesc(fieldList);
-//
-        Predicate pred = new Predicate("afff+beerw='5' ",td);
+        Assertions.assertEquals(node.finalValue , true);
 
-//pred.evaluatePredicate();
+        Assertions.assertEquals(node2.finalValue , false);
+
 
 
     }
+
+
 
 }

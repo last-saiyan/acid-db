@@ -16,7 +16,7 @@ public class ExpressionNode extends Node {
     public String fieldName;
 
     public TypesEnum type; // int, operator, finalValue, str
-    boolean finalValue; // final value of the predicate true or false
+    public boolean finalValue; // final value of the predicate true or false
 
     public ExpressionNode(int intValue){
         this.type = TypesEnum.INTEGER;

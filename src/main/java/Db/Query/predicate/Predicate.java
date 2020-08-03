@@ -21,14 +21,10 @@ public class Predicate {
         this.predicateString = predicateString;
     }
 
-    
 
     public ExpressionNode evaluate(Tuple tuple, TupleDesc td){
-
         createExpressionTree(td.getFieldMap(), tuple.getMapValue());
-
         return evaluateTree();
-
     }
 
 
@@ -37,7 +33,8 @@ public class Predicate {
         ExpressionLexer lexer = new ExpressionLexer(input);
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         ExpressionParser parser = new ExpressionParser(tokenStream);
-        tree = parser.prog(); // check whats happening here
+
+        tree = parser.prog();
         visitor = new ExpressionVisitor(fieldMap, tupleMap);
     }
 
@@ -45,6 +42,5 @@ public class Predicate {
     ExpressionNode evaluateTree(){
         return visitor.visit(tree);
     }
-
 
 }
