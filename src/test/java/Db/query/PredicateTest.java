@@ -62,11 +62,11 @@ public class PredicateTest {
         when(tuple.getMapValue()).thenReturn(tupleMap);
 
 
-        Predicate exp = new Predicate("columnA=10");
-        ExpressionNode node = exp.evaluate(tuple, td);
+        Predicate exp = new Predicate("columnA+columnB=30", td);
+        ExpressionNode node = exp.evaluate(tuple);
 
-        Predicate exp2 = new Predicate("columnA=20");
-        ExpressionNode node2 = exp2.evaluate(tuple, td);
+        Predicate exp2 = new Predicate("columnA+columnB=20", td);
+        ExpressionNode node2 = exp2.evaluate(tuple);
 
 
         Assertions.assertEquals(node.finalValue , true);

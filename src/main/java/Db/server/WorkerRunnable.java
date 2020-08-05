@@ -90,7 +90,7 @@ public class WorkerRunnable implements Runnable {
                         e.printStackTrace();
                     }
 
-                    if(!(query.getQuery().type.equals("init") || query.getQuery().type.equals("create"))) {
+                    if(!( query.getQuery().type.equals("init") || query.getQuery().type.equals("transaction") || query.getQuery().type.equals("create"))) {
                         if(tx == null){
                             tx = new Transaction(false);
                         }

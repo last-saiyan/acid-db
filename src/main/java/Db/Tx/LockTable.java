@@ -208,14 +208,16 @@ public class LockTable {
             tempPageID = pageIter.next();
             PIDExclusiveLock.remove(tempPageID);
 //            shared lock - remove transactionID from set
-            transactionIDSet = PIDSharedLock.get(pageID);
-            transactionIDSet.remove(transactionID);
-            PIDSharedLock.put(tempPageID, transactionIDSet);
+            if(PIDSharedLock.containsKey(pageID)) {
+                transactionIDSet = PIDSharedLock.get(pageID);
+                transactionIDSet.remove(transactionID);
+                PIDSharedLock.put(tempPageID, transactionIDSet);
+            }
         }
-
 //        this is called to free up map, if the transaction is aborted
         removeFromWaitingList(transactionID);
     }
 
 
 }
+

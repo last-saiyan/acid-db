@@ -1,9 +1,9 @@
 [
   {
     "type": "select",
-    "columns": ["column1, column2"],
+    "columns": ["columnA, columnB"],
 
-    "where": "a>5"
+    "where": "a=1"
   },
 
   {
@@ -17,11 +17,11 @@
     "where": "a>5",
     "values": [
       {
-        "colName" :"column1",
+        "colName" :"columnA",
         "value": "value1"
       },
       {
-        "colName":"column2",
+        "colName":"columnB",
         "value": "value2"
       }
     ]
@@ -32,11 +32,11 @@
 
     "values": [
       {
-        "colName" :"column1",
+        "colName" :"columnA",
         "value": "fst val"
       },
       {
-        "colName":"column2",
+        "colName":"columnB",
         "value": 1
       }
     ]
@@ -48,11 +48,11 @@
     "database": "dbname",
     "values": [
       {
-        "colName" :"column1",
+        "colName" :"columnA",
         "value": "string 10"
       },
       {
-        "colName":"column2",
+        "colName":"columnB",
         "value": "integer 4"
       }
     ]
@@ -61,12 +61,15 @@
 
 
   {
-    "transaction": "begin"
+    "transaction": "begin",
+    "type": "transaction"
   },
   {
-    "transaction": "commit"
+    "transaction": "commit",
+    "type": "transaction"
   },
   {
-    "transaction": "rollback"
+    "transaction": "rollback",
+    "type": "transaction"
   }
 ]

@@ -27,7 +27,7 @@ public class Acid implements Utils{
      private Acid()  {
 
          dbFolderPath = Utils.dbFolderPath;
-         diskManager = new DiskManager(database, dbFolderPath);
+         diskManager = new DiskManager(this, dbFolderPath);
          bufferPoolManager = new Manager(diskManager);
          server = new Server(Utils.port);
          dbName = null;

@@ -17,10 +17,12 @@ public class Query {
             System.out.println("error query is not correct json parsing");
 //            throw exception
         }
-        if(!validateQuery(query)){
-            System.out.println("error query is not validated");
+
+//        if(!validateQuery(query)){
+//            System.out.println("error query is not validated");
 //            throw exception
-        }
+//        }
+
         System.out.println(query.type +" asdfasd");
         if(!(query.type.equals("init") || query.type.equals("select") || query.type.equals("create") || query.type.equals("insert"))){
             TupleDesc tupleDesc = td;

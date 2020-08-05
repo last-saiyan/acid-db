@@ -6,6 +6,7 @@ import Db.Tx.Transaction;
 import Db.bufferManager.Manager;
 import Db.diskManager.DiskManager;
 import Db.iterator.*;
+import Db.query.predicate.Predicate;
 
 public class Planner {
     private QueryMapper query;
