@@ -124,7 +124,7 @@ public class DiskManager implements Constants {
 
 
     public boolean writePage(Page page){
-        return writePage(page.getHeader("id"), page.getPageData());
+        return writePage(page.pageID(), page.getPageData());
     }
 
 

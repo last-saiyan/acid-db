@@ -141,7 +141,7 @@ public class Manager {
             if(
                     (tempPage != null) &&
                     (tempPage.pageDataCapacity < tuple.size() + tempPage.pageSize()) &&
-                    tx.canLockPage(tempPage.getHeader("id"), Permission.EXCLUSIVE)
+                    tx.canLockPage(tempPage.pageID(), Permission.EXCLUSIVE)
             ){
                 replacer.updateEntry(i);
                 found = true;
@@ -177,8 +177,8 @@ public class Manager {
 
         bufferPool[buffPoolInd] = page;
         pageMapping[buffPoolInd].pinCounter++;
-        pageMapping[buffPoolInd].pId = page.getHeader("id");
-        tx.lockPage(page.getHeader("id"), Permission.EXCLUSIVE);
+        pageMapping[buffPoolInd].pId = page.pageID();
+        tx.lockPage(page.pageID(), Permission.EXCLUSIVE);
 
         replacer.updateEntry(buffPoolInd);
         return bufferPool[buffPoolInd];

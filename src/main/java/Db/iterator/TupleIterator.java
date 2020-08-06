@@ -53,13 +53,13 @@ public class TupleIterator implements DbIterator {
     @Override
     public boolean hasNext(){
 
-        int pageSize = page.getHeader("size");
-        if((tupleIndex*tDesc.tupleSize())<pageSize){
+        int pageSize = page.pageSize();
+        if( (tupleIndex*tDesc.tupleSize()) < pageSize){
             return true;
         }else{
             if(pageIterator.hasNext()){
                  page = pageIterator.getNextPage();
-                 return true;
+                return true;
             }else {
                 return false;
             }
