@@ -1,7 +1,7 @@
 [
   {
     "type": "select",
-    "columns": ["columnA, columnB"],
+    "columns": ["columnA", "columnB"],
 
     "where": "a=1"
   },

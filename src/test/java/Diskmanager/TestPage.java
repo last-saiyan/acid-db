@@ -20,14 +20,18 @@ import static org.mockito.Mockito.when;
 
 public class TestPage {
 
-    TupleDesc td;
 
-    public TestPage() throws IOException, ClassNotFoundException {
-        td = TupleDesc.deSerializeFromDisk("./dbFile/dbname.cat");
-
+    TupleDesc getTD() {
+        ArrayList<Field> fieldArrayList = new ArrayList<>();
+        Field f1 = new Field("columnA", TypesEnum.STRING, 10);
+        fieldArrayList.add(f1);
+        f1 = new Field("columnB", TypesEnum.INTEGER, 4);
+        fieldArrayList.add(f1);
+        TupleDesc td = new TupleDesc(fieldArrayList);
+        return td;
     }
 
-//    @Mock
+    @Mock
     HeapFileIterator hfIter = mock(HeapFileIterator.class);
 
     private String RandomString( int size){
@@ -46,6 +50,7 @@ public class TestPage {
 
     @Test
     void testEncodeDecode(){
+        TupleDesc td = getTD();
 
         Page page = new Page(1,td);
         HashMap<String, Value> colVal;
@@ -57,10 +62,10 @@ public class TestPage {
         while (count <5){
             colVal = new HashMap<>();
             String generatedString = RandomString(5);
-            colVal.put("column1", new StringValue(generatedString, 10));
+            colVal.put("columnA", new StringValue(generatedString, 10));
             column1.add(generatedString);
             int generatedInt = new Random().nextInt();
-            colVal.put("column2", new IntValue(generatedInt));
+            colVal.put("columnB", new IntValue(generatedInt));
             column2.add(generatedInt);
             tuple = new Tuple(colVal);
             page.insertTuple(tuple);
@@ -76,7 +81,7 @@ public class TestPage {
         tupleIterator.open();
         while (tupleIterator.hasNext()){
             tuple = tupleIterator.next();
-            Value<String> value = tuple.getMapValue().get("column2");
+            Value<String> value = tuple.getMapValue().get("columnB");
             int temp = column2.get(i);
             Assertions.assertEquals(value.toString(), Integer.toString(temp));
             i++;

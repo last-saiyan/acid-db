@@ -23,8 +23,6 @@ public class Page implements Utils {
 
         pageHeader.put("id",id);
         pageHeader.put("size",0);
-//        calculate capacity of page based on size of one record, each record is fixed len
-        pageHeader.put("capacity",100);
         pageData = new byte[Utils.pageSize - pageHeader.size()*4];
         pageDataCapacity = Utils.pageSize - pageHeader.size()*4;
         this.td = td;
@@ -58,6 +56,8 @@ public class Page implements Utils {
     public TupleDesc getTupleDesc(){
         return this.td;
     }
+
+
     public void insertTuple(Tuple tuple){
         int size = pageHeader.get("size");
         if(tuple.size() + size < pageDataCapacity){

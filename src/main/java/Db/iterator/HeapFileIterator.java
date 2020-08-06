@@ -31,7 +31,6 @@ public class HeapFileIterator {
 
 
     public boolean hasNext(){
-
         if(pageCount < dskMgr.dbSize()){
             return true;
         }else {
@@ -48,6 +47,7 @@ public class HeapFileIterator {
         Page page = null;
         try {
             page = bfPoolManager.getPage(pageCount, tx, perm);
+            pageCount++;
         } catch (InterruptedException e) {
 //            abort transaction here page not found
             e.printStackTrace();
