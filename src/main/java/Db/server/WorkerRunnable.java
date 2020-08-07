@@ -39,7 +39,6 @@ public class WorkerRunnable implements Runnable {
                 queryString = queryString + tempString;
 
                 if( !tempString.equals("") && tempString.charAt(tempString.length()-1) == ';'){
-                    System.out.println("new query");
                     queryString = queryString.substring(0, queryString.length()-1);
                     Acid db = Acid.getDatabase();
 
@@ -94,6 +93,7 @@ public class WorkerRunnable implements Runnable {
                         if(tx == null){
                             tx = new Transaction(false);
                         }
+
                         Planner planner = new Planner(query.getQuery(), query.getPredicate(), tx);
 
 //                        individual query has to be treated as a transaction
@@ -103,6 +103,7 @@ public class WorkerRunnable implements Runnable {
 
                         if(!tx.isExplicit()){
                             tx.commit();
+                            tx = null;
                         }
 
                     }

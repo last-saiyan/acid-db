@@ -134,13 +134,13 @@ public class Manager {
                 break;
             }
         }
+        i = 0;
 
         while (!found && i < bufferPool.length){
             tempPage = bufferPool[i];
-
             if(
                     (tempPage != null) &&
-                    (tempPage.pageDataCapacity < tuple.size() + tempPage.pageSize()) &&
+                    (tempPage.pageDataCapacity > tuple.size() + tempPage.pageSize()) &&
                     tx.canLockPage(tempPage.pageID(), Permission.EXCLUSIVE)
             ){
                 replacer.updateEntry(i);
@@ -155,7 +155,6 @@ public class Manager {
         }else {
             tempPage = insertNewPage(tx);
         }
-
         tempPage.insertTuple(tuple);
     }
 
