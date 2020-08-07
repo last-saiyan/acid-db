@@ -27,7 +27,7 @@ public class Planner {
 
         switch (query.type){
             case "select":
-                return selectIterator(query, null);
+                return selectIterator(query, predicate);
             case "update":
                 return updateIterator(query, predicate);
             case "insert":

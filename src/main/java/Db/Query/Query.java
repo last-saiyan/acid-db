@@ -23,7 +23,7 @@ public class Query {
 //            throw exception
 //        }
 
-        if(!(query.type.equals("init") || query.type.equals("select") || query.type.equals("create") || query.type.equals("insert"))){
+        if(!(query.type.equals("init") || query.type.equals("create") || query.type.equals("insert"))){
             TupleDesc tupleDesc = td;
             predicate = new Predicate(query.where, tupleDesc);
         }

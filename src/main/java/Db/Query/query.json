@@ -3,7 +3,7 @@
     "type": "select",
     "columns": ["columnA", "columnB"],
 
-    "where": "a=1"
+    "where": "columnB=1"
   },
 
   {

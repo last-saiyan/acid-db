@@ -16,7 +16,6 @@ public class HeapFileIterator {
 
     Manager bfPoolManager;
     int pageCount;
-    Page currentPage;
     DiskManager dskMgr;
     Transaction tx;
     Permission perm;

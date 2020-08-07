@@ -15,10 +15,14 @@ public class TupleIterator implements DbIterator {
     private int tupleIndex;
     private TupleDesc tDesc;
     private HeapFileIterator pageIterator;
+    private Tuple nextTuple;
+    private Predicate predicate;
 
     public TupleIterator(HeapFileIterator pageIterator, Predicate predicate){
         this.pageIterator = pageIterator;
+        this.predicate = predicate;
     }
+
 
     @Override
     public void open(){
@@ -35,6 +39,7 @@ public class TupleIterator implements DbIterator {
         page.insertTuple(tuple);
     }
 
+
     /*
     *
     * the tuple is calculated by merging the current value
@@ -45,6 +50,7 @@ public class TupleIterator implements DbIterator {
         insert(tuple);
     }
 
+
     /*
     * checks if index is less than page size
     * if no more tuples in current page
@@ -52,13 +58,26 @@ public class TupleIterator implements DbIterator {
     * */
     @Override
     public boolean hasNext(){
+        if(nextTuple == null){
+            nextTuple = filterTuple();
+        }
 
+        if(nextTuple == null){
+            return false;
+        }else {
+            return true;
+        }
+
+    }
+
+
+    public boolean hasNextTuple(){
         int pageSize = page.pageSize();
         if( (tupleIndex*tDesc.tupleSize()) < pageSize){
             return true;
         }else{
             if(pageIterator.hasNext()){
-                 page = pageIterator.getNextPage();
+                page = pageIterator.getNextPage();
                 return true;
             }else {
                 return false;
@@ -67,21 +86,53 @@ public class TupleIterator implements DbIterator {
     }
 
 
-    @Override
-    public Tuple next(){
 
-        if(hasNext()){
+    public Tuple filterTuple(){
+        Tuple tempTuple;
+        if (hasNextTuple()){
+            tempTuple = nextTuple();
+        }else {
+            return null;
+        }
+        while (tempTuple != null && !(predicate.evaluate(tempTuple).finalValue)){
+            if (hasNextTuple()) {
+                tempTuple = nextTuple();
+            }else {
+                return null;
+            }
+        }
+        return tempTuple;
+    }
+
+
+    public Tuple nextTuple(){
+        if(hasNextTuple()){
             int offset = tupleIndex*tDesc.tupleSize();
-
             byte[] tupleByte = new byte[tDesc.tupleSize()];
             System.arraycopy(page.pageData,offset,tupleByte,0,tDesc.tupleSize());
             tupleIndex++;
             return new Tuple(tupleByte, tDesc);
         }else{
-            throw new RuntimeException("no more tuples ");
-//            throw exception
+//            throw new RuntimeException("no more tuples ");
+            return null;
         }
     }
+
+
+
+    @Override
+    public Tuple next(){
+
+        if(hasNext()) {
+            if (nextTuple != null) {
+                Tuple tempTuple = nextTuple;
+                nextTuple = null;
+                return tempTuple;
+            }
+        }
+        return null;
+    }
+
 
     @Override
     public void close(){
