@@ -34,16 +34,6 @@ public class PredicateTest {
 
         TupleDesc td = new TupleDesc(fieldArrayList);
 
-//        try {
-//            td = TupleDesc.deSerializeFromDisk("./dbFile/dbname.cat");
-//        }catch (Exception e){
-//            e.printStackTrace();
-//        }
-//        ArrayList<Field> map = td.getFieldList();
-//        for(int i=0;i< map.size(); i++){
-//            Field field = map.get(i);
-//            System.out.println(field.fieldName + " - " + field.typesEnum+ " _ "+ field.size);
-//        }
         return td;
     }
 

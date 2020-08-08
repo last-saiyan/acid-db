@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class Page implements Utils {
 
-    public HashMap<PageHeaderEnum, Integer> pageHeader = new HashMap();
+    private HashMap<PageHeaderEnum, Integer> pageHeader = new HashMap();
     public byte[] pageData;
     public TupleDesc td;
     public int pageDataCapacity;

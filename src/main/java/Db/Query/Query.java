@@ -14,8 +14,7 @@ public class Query {
         this.queryString = queryString;
         query = queryObject(queryString);
         if(query == null){
-            System.out.println("error query is not correct json parsing");
-//            throw exception
+            throw new RuntimeException("error query is not correct json parsing");
         }
 
 //        if(!validateQuery(query)){

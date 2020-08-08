@@ -113,7 +113,6 @@ public class TupleIterator implements DbIterator {
             tupleIndex++;
             return new Tuple(tupleByte, tDesc);
         }else{
-//            throw new RuntimeException("no more tuples ");
             return null;
         }
     }

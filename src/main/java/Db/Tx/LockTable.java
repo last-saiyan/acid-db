@@ -8,6 +8,8 @@ package Db.Tx;
 * */
 
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class LockTable {
 
@@ -19,6 +21,7 @@ public class LockTable {
 
 //    map of transaction id that is waiting to lock page id
     private HashMap<Integer, Set<Integer>> tIDWaiting;
+    private static final Logger logger = Logger.getLogger(LockTable.class.getName());
 
 
 
@@ -26,6 +29,7 @@ public class LockTable {
         PIDExclusiveLock = new HashMap<>();
         PIDSharedLock = new HashMap<>();
         tIDWaiting = new HashMap<>();
+
     }
 
 
@@ -44,7 +48,7 @@ public class LockTable {
             }
             addToWaitingList(transactionID, pageID);
 //            wait till the other transaction is completed
-            System.out.println("page - " +  pageID + " is held by exclusive lock by transaction - " + transactionID);
+            logger.log(Level.INFO, "page - {0} is held by exclusive lock by transaction {1}", new int[]{pageID, transactionID} );
             return false;
         }
 
@@ -67,7 +71,7 @@ public class LockTable {
 
             if(PIDSharedLock.containsKey(pageID)){
 //                wait till the other transaction is completed
-                System.out.println("page - " +  pageID + " is held by shared lock by transaction - " + transactionID);
+                logger.log(Level.INFO, "page - {0} is held by shared lock by transaction {1}", new int[]{pageID, transactionID} );
                 addToWaitingList(transactionID, pageID);
                 return false;
             }
@@ -147,7 +151,6 @@ public class LockTable {
             if(!PIDExclusiveLock.containsKey(pageID)){
                 PIDExclusiveLock.put(pageID, transactionID);
             }
-
             return true;
         }
     }

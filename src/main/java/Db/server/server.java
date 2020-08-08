@@ -5,6 +5,8 @@ import java.net.Socket;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Server implements Runnable{
 
@@ -13,6 +15,9 @@ public class Server implements Runnable{
     protected ServerSocket serverSocket = null;
     protected boolean      isStopped    = false;
     protected Thread       runningThread= null;
+    private static final Logger logger =
+            Logger.getLogger(Server.class.getName());
+
     protected ExecutorService threadPool = Executors.newFixedThreadPool(10);
 
     public Server(int port){
@@ -35,7 +40,7 @@ public class Server implements Runnable{
             this.threadPool.execute(new WorkerRunnable(clientSocket));
         }
         this.threadPool.shutdown();
-        System.out.println("Server Stopped.") ;
+        logger.log(Level.INFO, "Server Stopped.");
     }
 
 

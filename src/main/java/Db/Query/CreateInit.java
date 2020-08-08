@@ -54,7 +54,6 @@ public class CreateInit {
             }
 
         }else {
-            System.out.println("error database already exist");
             throw new FileAlreadyExistsException(query.database,"", "database already exists");
         }
 
@@ -76,9 +75,7 @@ public class CreateInit {
             diskManager.setDatabase(query.database);
             db.dbPageCount = diskManager.dbSize();
             db.setTupleDesc(td);
-            System.out.println(td+ "- init td");
         }else {
-            System.out.println("error database is not present");
             throw new FileNotFoundException(query.database);
         }
     }

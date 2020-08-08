@@ -59,8 +59,7 @@ public class DiskManager implements Constants {
                 this.dbFolderPath = dbFolderPath;
             }else {
                 if(!dbFolder.mkdir()){
-                    System.out.println("unable to create a db");
-//                    throw error
+                    throw new RuntimeException("unable to create a db");
                 }
                 this.dbFolderPath = dbFolderPath;
             }
