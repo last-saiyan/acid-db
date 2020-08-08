@@ -91,7 +91,15 @@ public class Transaction {
 
 
     public boolean canLockPage(int pageID, Permission perm){
-        return lockManager.canLockPage(pageID, tID, perm);
+        if(lockManager.canLockPage(pageID, tID, perm)){
+            if(perm == Permission.EXCLUSIVE){
+                pagesXLocked.add(pageID);
+            }else {
+                pagesSLocked.add(pageID);
+            }
+            return true;
+        }
+        return false;
     }
 
     /*
