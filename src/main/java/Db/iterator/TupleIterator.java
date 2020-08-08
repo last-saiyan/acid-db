@@ -71,16 +71,19 @@ public class TupleIterator implements DbIterator {
     }
 
 
+
     public boolean hasNextTuple(){
         int pageSize = page.pageSize();
         if( (tupleIndex*tDesc.tupleSize()) < pageSize){
             return true;
         }else{
-            if(pageIterator.hasNext()){
-                page = pageIterator.getNextPage();
-                return true;
-            }else {
+
+            page = pageIterator.getNextPage();
+            tupleIndex = 0;
+            if(page == null){
                 return false;
+            }else {
+                return true;
             }
         }
     }
@@ -88,19 +91,12 @@ public class TupleIterator implements DbIterator {
 
 
     public Tuple filterTuple(){
-        Tuple tempTuple;
-        if (hasNextTuple()){
-            tempTuple = nextTuple();
-        }else {
-            return null;
-        }
+        Tuple tempTuple = nextTuple();
+
         while (tempTuple != null && !(predicate.evaluate(tempTuple).finalValue)){
-            if (hasNextTuple()) {
-                tempTuple = nextTuple();
-            }else {
-                return null;
-            }
+            tempTuple = nextTuple();
         }
+
         return tempTuple;
     }
 

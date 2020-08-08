@@ -44,6 +44,11 @@ public class HeapFileIterator {
 
     public Page getNextPage(){
         Page page = null;
+
+        if (!hasNext()){
+            return null;
+        }
+
         try {
             page = bfPoolManager.getPage(pageCount, tx, perm);
             pageCount++;

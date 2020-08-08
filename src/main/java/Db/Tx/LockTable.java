@@ -56,13 +56,11 @@ public class LockTable {
             Set<Integer> TID;
             if (PIDSharedLock.containsKey(pageID)){
                 TID = PIDSharedLock.get(pageID);
-                if(!TID.contains(transactionID)){
-                    TID.add(transactionID);
-                }
+                TID.add(transactionID);
                 PIDSharedLock.put(pageID, TID);
             }else {
                 TID = new HashSet<>();
-                TID.add(pageID);
+                TID.add(transactionID);
                 PIDSharedLock.put(pageID, TID);
             }
             removeFromWaitingList(transactionID);
@@ -211,10 +209,14 @@ public class LockTable {
             tempPageID = pageIter.next();
             PIDExclusiveLock.remove(tempPageID);
 //            shared lock - remove transactionID from set
-            if(PIDSharedLock.containsKey(pageID)) {
-                transactionIDSet = PIDSharedLock.get(pageID);
+            if(PIDSharedLock.containsKey(tempPageID)) {
+                transactionIDSet = PIDSharedLock.get(tempPageID);
                 transactionIDSet.remove(transactionID);
-                PIDSharedLock.put(tempPageID, transactionIDSet);
+                if (transactionIDSet.isEmpty()) {
+                    PIDSharedLock.remove(tempPageID);
+                }else {
+                    PIDSharedLock.put(tempPageID, transactionIDSet);
+                }
             }
         }
 //        this is called to free up map, if the transaction is aborted
