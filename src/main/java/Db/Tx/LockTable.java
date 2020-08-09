@@ -20,6 +20,7 @@ public class LockTable {
     private HashMap<Integer, Set<Integer>> PIDSharedLock;
 
 //    map of transaction id that is waiting to lock page id
+//    todo implement fair locking
     private HashMap<Integer, Set<Integer>> tIDWaiting;
     private static final Logger logger = Logger.getLogger(LockTable.class.getName());
 
@@ -68,6 +69,10 @@ public class LockTable {
         }else {
 
             if(PIDSharedLock.containsKey(pageID)){
+                Set<Integer> tidSet = PIDSharedLock.get(pageID);
+                if(tidSet.size() == 1 && tidSet.contains(transactionID)){
+                    return true;
+                }
 //                wait till the other transaction is completed
                 logger.log(Level.INFO, "page - {0} is held by shared lock by transaction {1}", new int[]{pageID, transactionID} );
                 addToWaitingList(transactionID, pageID);
@@ -125,30 +130,41 @@ public class LockTable {
 
 
 
-    public synchronized boolean canLockPage(int pageID, int transactionID, Permission perm){
+    public synchronized boolean canLockPage(int pageID, int transactionID, Permission perm) {
 
-        if (perm == Permission.SHARED){
-            if(PIDExclusiveLock.containsKey(pageID)){
-                return false;
+
+        if (PIDExclusiveLock.containsKey(pageID)) {
+            if (PIDExclusiveLock.get(pageID) == transactionID) {
+                return true;
             }
-            if(!PIDSharedLock.containsKey(pageID)){
-                Set<Integer> TID = PIDSharedLock.get(pageID);
-                if(!TID.contains(transactionID)){
-                    TID.add(transactionID);
-                }
+//            wait till the other transaction is completed
+            logger.log(Level.INFO, "page - {0} is held by exclusive lock by transaction {1}", new int[]{pageID, transactionID});
+            return false;
+        }
+        if (perm == Permission.SHARED) {
+            Set<Integer> TID;
+            if (PIDSharedLock.containsKey(pageID)) {
+                TID = PIDSharedLock.get(pageID);
+                TID.add(transactionID);
+                PIDSharedLock.put(pageID, TID);
+            } else {
+                TID = new HashSet<>();
+                TID.add(transactionID);
                 PIDSharedLock.put(pageID, TID);
             }
             return true;
-        }else {
-            if(
-                    (PIDExclusiveLock.containsKey(pageID)) ||
-                    (PIDSharedLock.containsKey(pageID))
-            ){
+        } else {
+
+            if (PIDSharedLock.containsKey(pageID)) {
+                Set<Integer> tidSet = PIDSharedLock.get(pageID);
+                if(tidSet.size() == 1 && tidSet.contains(transactionID)){
+                    return true;
+                }
+//                wait till the other transaction is completed
+                logger.log(Level.INFO, "page - {0} is held by shared lock by transaction {1}", new int[]{pageID, transactionID});
                 return false;
             }
-            if(!PIDExclusiveLock.containsKey(pageID)){
-                PIDExclusiveLock.put(pageID, transactionID);
-            }
+            PIDExclusiveLock.put(pageID, transactionID);
             return true;
         }
     }
