@@ -49,7 +49,7 @@ public class LockTable {
             }
             addToWaitingList(transactionID, pageID);
 //            wait till the other transaction is completed
-            logger.log(Level.INFO, "page - {0} is held by exclusive lock by transaction {1}", new int[]{pageID, transactionID} );
+            logger.log(Level.INFO, "page - "+pageID+ " is held by exclusive lock by transaction "+transactionID  );
             return false;
         }
 
@@ -74,7 +74,7 @@ public class LockTable {
                     return true;
                 }
 //                wait till the other transaction is completed
-                logger.log(Level.INFO, "page - {0} is held by shared lock by transaction {1}", new int[]{pageID, transactionID} );
+                logger.log(Level.INFO, "page - "+pageID+ " is held by shared lock by transaction "+ transactionID );
                 addToWaitingList(transactionID, pageID);
                 return false;
             }
@@ -138,7 +138,7 @@ public class LockTable {
                 return true;
             }
 //            wait till the other transaction is completed
-            logger.log(Level.INFO, "page - {0} is held by exclusive lock by transaction {1}", new int[]{pageID, transactionID});
+            logger.log(Level.INFO, "page - " + pageID + " is held by exclusive lock by transaction " + transactionID);
             return false;
         }
         if (perm == Permission.SHARED) {
@@ -161,7 +161,7 @@ public class LockTable {
                     return true;
                 }
 //                wait till the other transaction is completed
-                logger.log(Level.INFO, "page - {0} is held by shared lock by transaction {1}", new int[]{pageID, transactionID});
+                logger.log(Level.INFO, "page - " + pageID + " is held by shared lock by transaction "+transactionID);
                 return false;
             }
             PIDExclusiveLock.put(pageID, transactionID);
