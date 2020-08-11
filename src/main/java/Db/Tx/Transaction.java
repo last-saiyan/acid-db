@@ -45,12 +45,9 @@ public class Transaction {
     * check for deadlock ?
     * abort the transaction
     * */
-    public void lockPage(int pageID, Permission perm) throws InterruptedException {
-
+    public void lockPage(int pageID, Permission perm) {
         if(!lockManager.grantLock(pageID, tID, perm)) {
-
             doWait(pageID, perm);
-
         }else{
             if(perm == Permission.SHARED) {
                 pagesSLocked.add(pageID);
@@ -61,11 +58,19 @@ public class Transaction {
     }
 
 
-    public void doWait(int pageID, Permission perm){
+    private void doWait(int pageID, Permission perm){
         synchronized(lockManager){
-            if(!lockManager.grantLock(pageID, tID, perm)){
+
+            while (!lockManager.grantLock(pageID, tID, perm)){
                 try{
-                    lockManager.wait();
+                    lockManager.wait(10000);
+
+                    if(!lockManager.grantLock(pageID, tID, perm)){
+                        if (detectDeadLocks()){
+                            logger.log(Level.SEVERE,  "Deadlock");
+                            throw new RuntimeException("deadlock detected");
+                        }
+                    }
                 } catch(InterruptedException e){
                     logger.log(Level.SEVERE, tID + " - has exception when waiting");
                 }
@@ -74,7 +79,7 @@ public class Transaction {
     }
 
 
-    public void doNotify(){
+    private void doNotify(){
         synchronized(lockManager){
             lockManager.notify();
         }

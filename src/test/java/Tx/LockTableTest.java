@@ -58,4 +58,29 @@ public class LockTableTest {
 
 
     }
+
+
+    @Test
+    public void detectDeadLock(){
+
+        LockTable locks = new LockTable();
+
+        locks.grantLock(1, 0, Permission.EXCLUSIVE);
+        locks.grantLock(2, 1, Permission.EXCLUSIVE);
+        locks.grantLock(1, 1, Permission.EXCLUSIVE);
+        Assertions.assertEquals(locks.detectDeadLock(1), false);
+        locks.grantLock(2, 0, Permission.EXCLUSIVE);
+        Assertions.assertEquals(locks.detectDeadLock(1), true);
+
+        locks = new LockTable();
+
+        locks.grantLock(1, 1, Permission.SHARED);
+        locks.grantLock(2, 2, Permission.SHARED);
+        locks.grantLock(1, 2, Permission.EXCLUSIVE);
+        Assertions.assertEquals(locks.detectDeadLock(1), false);
+        locks.grantLock(2, 1, Permission.EXCLUSIVE);
+        Assertions.assertEquals(locks.detectDeadLock(1), true);
+
+
+    }
 }
