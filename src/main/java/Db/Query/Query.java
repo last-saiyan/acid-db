@@ -1,6 +1,7 @@
 package Db.query;
 
 import Db.catalog.TupleDesc;
+import Db.query.predicate.Predicate;
 import com.google.gson.Gson;
 
 public class Query {
@@ -13,15 +14,15 @@ public class Query {
         this.queryString = queryString;
         query = queryObject(queryString);
         if(query == null){
-            System.out.println("error query is not correct json parsing");
-//            throw exception
+            throw new RuntimeException("error query is not correct json parsing");
         }
-        if(!validateQuery(query)){
-            System.out.println("error query is not validated");
+
+//        if(!validateQuery(query)){
+//            System.out.println("error query is not validated");
 //            throw exception
-        }
-        System.out.println(query.type +" asdfasd");
-        if(!(query.type.equals("init") || query.type.equals("select") || query.type.equals("create") || query.type.equals("insert"))){
+//        }
+
+        if(!(query.type.equals("init") || query.type.equals("create") || query.type.equals("insert"))){
             TupleDesc tupleDesc = td;
             predicate = new Predicate(query.where, tupleDesc);
         }

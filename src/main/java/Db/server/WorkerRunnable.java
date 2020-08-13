@@ -10,10 +10,13 @@ import Db.query.Query;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.FileAlreadyExistsException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class WorkerRunnable implements Runnable {
-
+    private static final Logger logger =
+            Logger.getLogger(WorkerRunnable.class.getName());
     protected Socket clientSocket = null;
 
     public WorkerRunnable(Socket clientSocket) {
@@ -39,12 +42,14 @@ public class WorkerRunnable implements Runnable {
                 queryString = queryString + tempString;
 
                 if( !tempString.equals("") && tempString.charAt(tempString.length()-1) == ';'){
-                    System.out.println("new query");
+
                     queryString = queryString.substring(0, queryString.length()-1);
                     Acid db = Acid.getDatabase();
 
                     Query query = new Query(queryString, db.tupleDesc);
                     queryString = "";
+
+                    logger.log(Level.INFO, "new request , {0}" , query.getQuery().type);
 
                     try {
                         if(query.getQuery().type.equals("init")){
@@ -84,36 +89,35 @@ public class WorkerRunnable implements Runnable {
                         }
                     }catch (FileAlreadyExistsException e){
                         output.write("database already present".getBytes());
-                        e.printStackTrace();
+                        logger.log(Level.INFO, e.toString());
                     }catch (FileNotFoundException e){
                         output.write("database not present".getBytes());
-                        e.printStackTrace();
+                        logger.log(Level.INFO, e.toString());
                     }
 
-                    if(!(query.getQuery().type.equals("init") || query.getQuery().type.equals("create"))) {
+                    if(!( query.getQuery().type.equals("init") || query.getQuery().type.equals("transaction") || query.getQuery().type.equals("create"))) {
+//                        individual query has to be treated as a transaction
                         if(tx == null){
                             tx = new Transaction(false);
                         }
-                        Planner planner = new Planner(query.getQuery(), query.getPredicate(), tx);
 
-//                        individual query has to be treated as a transaction
+                        Planner planner = new Planner(query.getQuery(), query.getPredicate(), tx);
 
                         Executor executor = new Executor(planner.getplan(), output);
                         executor.run();
 
                         if(!tx.isExplicit()){
                             tx.commit();
+                            tx = null;
                         }
-
                     }
                 }
-
             }
-            System.out.println("connection closed");
+            logger.log(Level.INFO, "connection closed");
 
         } catch (IOException | ClassNotFoundException e) {
             //report exception somewhere.
-            e.printStackTrace();
+            logger.log(Level.INFO, e.toString());
         }
 
     }

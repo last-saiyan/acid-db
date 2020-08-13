@@ -1,7 +1,7 @@
 package Catalog;
 
-import Db.Query.ColValue;
-import Db.Query.Query;
+import Db.query.ColValue;
+import Db.query.Query;
 import Db.catalog.Field;
 import Db.catalog.TupleDesc;
 import Db.catalog.TypesEnum;

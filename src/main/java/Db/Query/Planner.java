@@ -6,6 +6,7 @@ import Db.Tx.Transaction;
 import Db.bufferManager.Manager;
 import Db.diskManager.DiskManager;
 import Db.iterator.*;
+import Db.query.predicate.Predicate;
 
 public class Planner {
     private QueryMapper query;
@@ -26,7 +27,7 @@ public class Planner {
 
         switch (query.type){
             case "select":
-                return selectIterator(query, null);
+                return selectIterator(query, predicate);
             case "update":
                 return updateIterator(query, predicate);
             case "insert":

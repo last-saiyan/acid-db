@@ -102,9 +102,9 @@ public class Tuple {
             
             tupleString += fieldValuesMap.get(field.fieldName).toString();
 
-            tupleString +=  " ;";
+            tupleString +=  " ; ";
         }
-        return tupleString;
+        return tupleString + "\n";
     }
 
 

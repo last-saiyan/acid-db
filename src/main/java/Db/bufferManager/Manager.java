@@ -8,6 +8,7 @@ import Db.Utils;
 import Db.catalog.Tuple;
 import Db.diskManager.Page;
 import Db.diskManager.DiskManager;
+import Db.diskManager.PageHeaderEnum;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -136,14 +137,14 @@ public class Manager {
                 break;
             }
         }
+        i = 0;
 
         while (!found && i < bufferPool.length){
             tempPage = bufferPool[i];
-
             if(
                     (tempPage != null) &&
-                    (tempPage.pageDataCapacity < tuple.size() + tempPage.pageSize()) &&
-                    tx.canLockPage(tempPage.getHeader("id"), Permission.EXCLUSIVE)
+                    (tempPage.pageDataCapacity > tuple.size() + tempPage.pageSize()) &&
+                    tx.canLockPage(tempPage.pageID(), Permission.EXCLUSIVE)
             ){
                 replacer.updateEntry(i);
                 found = true;
@@ -157,7 +158,12 @@ public class Manager {
         }else {
             tempPage = insertNewPage(tx);
         }
-        LogRecord insertLogRecord = new LogRecord(tx.getPrevLsn(), LogRecord.insert, null, tuple.getBytes(), tempPage.getHeader("id"), tx.getTID(), tempPage.getHeader("size"));
+        LogRecord insertLogRecord = new LogRecord(tx.getPrevLsn(),
+                LogRecord.insert, null, tuple.getBytes(),
+                tempPage.getHeader(PageHeaderEnum.ID),
+                tx.getTID(),
+                tempPage.getHeader(PageHeaderEnum.SIZE)
+        );
         int lsn = tx.addLogRecord(insertLogRecord);
         tempPage.setLsn(lsn);
         tempPage.insertTuple(tuple);
@@ -181,8 +187,8 @@ public class Manager {
 
         bufferPool[buffPoolInd] = page;
         pageMapping[buffPoolInd].pinCounter++;
-        pageMapping[buffPoolInd].pId = page.getHeader("id");
-        tx.lockPage(page.getHeader("id"), Permission.EXCLUSIVE);
+        pageMapping[buffPoolInd].pId = page.pageID();
+        tx.lockPage(page.pageID(), Permission.EXCLUSIVE);
 
         replacer.updateEntry(buffPoolInd);
         return bufferPool[buffPoolInd];

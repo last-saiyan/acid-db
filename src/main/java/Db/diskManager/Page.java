@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class Page implements Utils {
 
-    public HashMap<String, Integer> pageHeader = new HashMap();
+    private HashMap<PageHeaderEnum, Integer> pageHeader = new HashMap();
     public byte[] pageData;
     public TupleDesc td;
     public int pageDataCapacity;
@@ -21,10 +21,8 @@ public class Page implements Utils {
 
     public Page(int id, TupleDesc td){
 
-        pageHeader.put("id",id);
-        pageHeader.put("size",0);
-//        calculate capacity of page based on size of one record, each record is fixed len
-        pageHeader.put("capacity",100);
+        pageHeader.put(PageHeaderEnum.ID, id);
+        pageHeader.put(PageHeaderEnum.SIZE, 0);
         pageData = new byte[Utils.pageSize - pageHeader.size()*4];
         pageDataCapacity = Utils.pageSize - pageHeader.size()*4;
         this.td = td;
@@ -42,13 +40,13 @@ public class Page implements Utils {
 //        test correctly here
 //        improve logic here
         id = id * td.tupleSize();
-        int size = pageHeader.get("size");
+        int size = pageHeader.get(PageHeaderEnum.SIZE);
         if(id + td.tupleSize() > size){
             int src =  (id +1) * td.tupleSize();
             int dest = id * td.tupleSize() ;
             int len =  pageData.length - src;
             System.arraycopy(pageData,src,pageData,dest, len);
-            pageHeader.put("size", size -  td.tupleSize());
+            pageHeader.put(PageHeaderEnum.SIZE, size -  td.tupleSize());
         }else {
 //
         }
@@ -61,10 +59,10 @@ public class Page implements Utils {
 
 
     public void insertTuple(Tuple tuple){
-        int size = pageHeader.get("size");
+        int size = pageHeader.get(PageHeaderEnum.SIZE);
         if(tuple.size() + size < pageDataCapacity){
             System.arraycopy(tuple.getBytes(),0, pageData, size, tuple.size());
-            pageHeader.put("size", tuple.size() + size);
+            pageHeader.put(PageHeaderEnum.SIZE, tuple.size() + size);
         }else {
             throw new ArrayIndexOutOfBoundsException("cant insert any more tuples in the page");
         }
@@ -82,7 +80,7 @@ public class Page implements Utils {
         int headerSize = pageHeader.size();
         byte[] headerByte = new byte[headerSize*4];
         int index = 0;
-        for(Map.Entry<String, Integer> entry : pageHeader.entrySet()){
+        for(Map.Entry<PageHeaderEnum, Integer> entry : pageHeader.entrySet()){
             byte[] temp = Utils.intToByte(entry.getValue());
             System.arraycopy(temp,0,headerByte,index*4,temp.length);
             index++;
@@ -95,32 +93,36 @@ public class Page implements Utils {
     * in the same order
     *
     * */
-    private HashMap<String, Integer>decodeHeader(byte[] page){
+    private HashMap<PageHeaderEnum, Integer>decodeHeader(byte[] page){
 
-        HashMap<String,Integer> header = new HashMap();
+        HashMap<PageHeaderEnum,Integer> header = new HashMap();
         byte[] size = new byte[4], id = new byte[4];
 
         System.arraycopy(page,0, size,0,size.length);
         System.arraycopy(page,size.length, id,0,id.length);
 
-        header.put("id", Utils.byteToInt(id));
-        header.put("size", Utils.byteToInt(size));
+        header.put(PageHeaderEnum.ID, Utils.byteToInt(id));
+        header.put(PageHeaderEnum.SIZE, Utils.byteToInt(size));
         return header;
     }
 
     public void setLsn(int lsn){
-        pageHeader.put("LSN", lsn);
+        pageHeader.put(PageHeaderEnum.LSN, lsn);
     }
 
 
-    public int getHeader(String headerName){
+    public int getHeader(PageHeaderEnum headerName){
 //        check if the key exists and throw exception
          return this.pageHeader.get(headerName);
     }
 
 
     public int pageSize(){
-        return getHeader("size");
+        return getHeader(PageHeaderEnum.SIZE);
+    }
+
+    public int pageID(){
+        return getHeader(PageHeaderEnum.ID);
     }
 
 

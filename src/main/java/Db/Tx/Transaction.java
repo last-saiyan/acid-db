@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /*
 * new transaction is created when new query comes
@@ -14,18 +16,21 @@ import java.util.Set;
 * */
 public class Transaction {
 
-    private static int tID = 0;
+    private static int tIdCounter;
+    private  int tID;
     private static LockTable lockManager = new LockTable();
     private Set<Integer> pagesSLocked;
     private Set<Integer> pagesXLocked;
     private boolean explicit;
     private static Recovery recoveryManager = new Recovery();
     private int prevLsn = 0;
+    private static final Logger logger = Logger.getLogger(Transaction.class.getName());
+
 
     public Transaction(boolean explicit){
         pagesSLocked = new HashSet<>();
         pagesXLocked = new HashSet<>();
-        incrementID();
+        tID = incrementID();
         this.explicit = explicit;
         recoveryManager.newTransaction(tID);
     }
@@ -45,26 +50,9 @@ public class Transaction {
     * check for deadlock ?
     * abort the transaction
     * */
-    public void lockPage(int pageID, Permission perm) throws InterruptedException, IOException {
-
+    public void lockPage(int pageID, Permission perm) {
         if(!lockManager.grantLock(pageID, tID, perm)) {
-            int timeout = 5000;
-//            research about alternative approach
-            Thread.sleep(timeout);
-
-            if(lockManager.grantLock(pageID, tID, perm)){
-                if(perm == Permission.SHARED) {
-                    pagesSLocked.add(pageID);
-                }else {
-                    pagesXLocked.add(pageID);
-                }
-                return;
-            }else {
-//                improve logic of which transaction gets aborted
-                if(detectDeadLocks()){
-                    abort();
-                }
-            }
+            doWait(pageID, perm);
         }else{
             if(perm == Permission.SHARED) {
                 pagesSLocked.add(pageID);
@@ -73,6 +61,35 @@ public class Transaction {
             }
         }
     }
+
+
+    private void doWait(int pageID, Permission perm){
+        synchronized(lockManager){
+
+            while (!lockManager.grantLock(pageID, tID, perm)){
+                try{
+                    lockManager.wait(10000);
+
+                    if(!lockManager.grantLock(pageID, tID, perm)){
+                        if (detectDeadLocks()){
+                            logger.log(Level.SEVERE,  "Deadlock");
+                            throw new RuntimeException("deadlock detected");
+                        }
+                    }
+                } catch(InterruptedException e){
+                    logger.log(Level.SEVERE, tID + " - has exception when waiting");
+                }
+            }
+        }
+    }
+
+
+    private void doNotify(){
+        synchronized(lockManager){
+            lockManager.notify();
+        }
+    }
+
 
 
     public Set<Integer> getPagesXLocked(){
@@ -95,7 +112,15 @@ public class Transaction {
 
 
     public boolean canLockPage(int pageID, Permission perm){
-        return lockManager.canLockPage(pageID, tID, perm);
+        if(lockManager.canLockPage(pageID, tID, perm)){
+            if(perm == Permission.EXCLUSIVE){
+                pagesXLocked.add(pageID);
+            }else {
+                pagesSLocked.add(pageID);
+            }
+            return true;
+        }
+        return false;
     }
 
 
@@ -123,13 +148,16 @@ public class Transaction {
         return prevLsn;
     }
 
-    public int getPrevLsn(){
+
+
+    public int getPrevLsn() {
         return prevLsn;
     }
 
 
-    static synchronized void incrementID(){
-        tID++;
+
+    static synchronized int incrementID(){
+        return tIdCounter++;
     }
 
 
@@ -142,10 +170,13 @@ public class Transaction {
     public void releaseAllLocks(){
         pagesSLocked.addAll(pagesXLocked);
         lockManager.releaseAllLock(tID, pagesSLocked);
+        doNotify();
     }
 
 
     public void commit(){
+        logger.log(Level.INFO, "Transaction - {0} is committed", tID );
+
 //        need to do more work here
         releaseAllLocks();
         recoveryManager.commit(tID);
@@ -155,6 +186,8 @@ public class Transaction {
 
     public void abort() throws IOException {
 //        need to do more work here
+        logger.log(Level.INFO, "Transaction - {0} is Aborted", tID );
+
         releaseAllLocks();
         recoveryManager.abort(tID);
     }

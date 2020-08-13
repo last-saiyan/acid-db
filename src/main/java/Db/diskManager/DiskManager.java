@@ -59,8 +59,7 @@ public class DiskManager implements Constants {
                 this.dbFolderPath = dbFolderPath;
             }else {
                 if(!dbFolder.mkdir()){
-                    System.out.println("unable to create a db");
-//                    throw error
+                    throw new RuntimeException("unable to create a db");
                 }
                 this.dbFolderPath = dbFolderPath;
             }
@@ -124,7 +123,7 @@ public class DiskManager implements Constants {
 
 
     public boolean writePage(Page page){
-        return writePage(page.getHeader("id"), page.getPageData());
+        return writePage(page.pageID(), page.getPageData());
     }
 
 
