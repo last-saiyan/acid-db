@@ -1,6 +1,7 @@
 package Db.query;
 
 import Db.Acid;
+import Db.Tx.Recovery;
 import Db.catalog.Field;
 import Db.catalog.TupleDesc;
 import Db.catalog.TypesEnum;
@@ -47,6 +48,8 @@ public class CreateInit {
             db.setTupleDesc(td);
             diskManager.createDbFile(query.database);
 
+            Recovery.setupLogFile(query.database, td);
+
             try {
                 td.serializeToDisk(db.dbFolderPath + "/"+ query.database + ".cat");
             }catch (IOException e){
@@ -75,6 +78,7 @@ public class CreateInit {
             diskManager.setDatabase(query.database);
             db.dbPageCount = diskManager.dbSize();
             db.setTupleDesc(td);
+            Recovery.setupLogFile(query.database,  td);
         }else {
             throw new FileNotFoundException(query.database);
         }

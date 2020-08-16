@@ -12,11 +12,16 @@ public class LogRecord {
 
     int pageID;
     int tId;
-    public static int insert = 1;
-    public static int update = 2;
-    public static int delete = 3;
-    public static int commit = 4;
-    public static int clr = 5;
+
+
+    public static int updateType = 1;
+    public static int commitType = 2;
+    public static int abortType = 3;
+    public static int endType = 4;
+    public static int clrType = 5;
+
+
+
     byte[] prevByte;
     byte[] nextByte;
     int logtype;
@@ -115,6 +120,9 @@ public class LogRecord {
         intByte = Utils.intToByte(tId);
         System.arraycopy(intByte, 0, recordData, 16, 4);
 
+        if(prevByte == null){
+            prevByte = new byte[td.tupleSize()];
+        }
         System.arraycopy(prevByte, 0, recordData, 20, td.tupleSize());
 
         System.arraycopy(nextByte, 0, recordData, (20+td.tupleSize()), 4);

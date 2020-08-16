@@ -5,6 +5,8 @@ import Db.Tx.Transaction;
 import Db.bufferManager.Manager;
 import Db.catalog.Tuple;
 
+import java.io.IOException;
+
 public class Insertion extends Operator {
 
     private Tuple data;
@@ -36,6 +38,8 @@ public class Insertion extends Operator {
             try {
                 bfPool.insertTuple(tuple, tx);
             } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
             return tuple;

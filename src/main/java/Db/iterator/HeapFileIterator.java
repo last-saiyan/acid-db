@@ -52,7 +52,7 @@ public class HeapFileIterator {
         try {
             page = bfPoolManager.getPage(pageCount, tx, perm);
             pageCount++;
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
 //            abort transaction here page not found
             e.printStackTrace();
         }

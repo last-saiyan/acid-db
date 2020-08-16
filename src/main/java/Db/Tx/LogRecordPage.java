@@ -3,6 +3,7 @@ package Db.Tx;
 
 import Db.Utils;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -16,12 +17,10 @@ public class LogRecordPage {
     HashMap<String, Integer> headers;
     static RandomAccessFile logRecordFile;
 
-    public LogRecordPage() {
-//        todo initilize pageId
-        int pageID = -1;
+    public LogRecordPage(int pageId) {
         headers = new HashMap<>();
         headers.put("count", 0);
-        headers.put("ID", pageID);
+        headers.put("ID", pageId);
         pageData = new byte[pageSize];
     }
 
@@ -30,8 +29,9 @@ public class LogRecordPage {
     }
 
 
-    public static void setFile(String logFileName) throws FileNotFoundException {
-        logRecordFile = new RandomAccessFile( logFileName , "rw");
+    public static void setFile(File logFileName) throws FileNotFoundException {
+        logRecordFile = new RandomAccessFile(logFileName, "rw");
+
     }
 
 
@@ -43,9 +43,7 @@ public class LogRecordPage {
 //        find better approach as the header can be updated
         int headerSize = headers.size()*4;
         int offset = headerSize + recordCount*LogRecord.size();
-        if((recordCount*LogRecord.size() +
-                recordData.length + headerSize) < pageSize){
-
+        if(((recordCount+1)*LogRecord.size() + headerSize) < pageSize){
             System.arraycopy(recordData, 0, pageData, offset, recordData.length);
             headers.put("count", recordCount+1);
             return true;
@@ -58,8 +56,9 @@ public class LogRecordPage {
         int headerSize = headers.size();
         int recordCount = getHeader("count");
         byte[] data = new byte[recordCount*LogRecord.size()];
-        System.arraycopy(pageData,headerSize, data, 0, data.length);
-        return pageData;
+
+        System.arraycopy(pageData, headerSize, data, 0, data.length);
+        return data;
     }
 
 
@@ -102,11 +101,13 @@ public class LogRecordPage {
         int pageID = getHeader("ID");
         int offset = pageID*pageSize;
         logRecordFile.seek(offset);
+
         byte[] data = new byte[Utils.pageSize];
         System.arraycopy(encodeHeader(),0, data, 0, headers.size()*4);
 
         byte[] pageData = encodePageData();
-        System.arraycopy(pageData, 0, data, headers.size()*4, pageData.length);
+        System.arraycopy(pageData, 0, data, headers.size()*4, (pageData.length));
+
         logRecordFile.write(data);
     }
 

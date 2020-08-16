@@ -5,6 +5,7 @@ import Db.bufferManager.Manager;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
 import Db.diskManager.Page;
+import Db.diskManager.PageHeaderEnum;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,16 +15,18 @@ import java.util.Iterator;
 
 public class Recovery {
     public int lsn = 0;
-    public int lastwriteLsn;
-    int tid;
     HashMap<Integer, Integer> tIDMapLastLsn;
     static String dbName;
     ArrayList<LogRecord> logRecordList;
+    HashMap<Integer, Integer> recLsnPIDMap;
+    private int pageId;
+    private static TupleDesc td;
 
 
     public Recovery(){
         logRecordList = new ArrayList<>();
         tIDMapLastLsn = new HashMap<>();
+        recLsnPIDMap = new HashMap<>();
     }
 
 
@@ -50,60 +53,34 @@ public class Recovery {
     }
 
 
-    /*
-    * iterates over log records and recreates the database
-    * */
-    public void recover(String dbName, Manager bfPool, Transaction tx, TupleDesc td) throws IOException, InterruptedException {
-        LogRecord.setTupleDesc(td);
-        LogRecordPage.setFile(dbName+ ".log");
-        LogIterator iterator = new LogIterator(true);
-        if(iterator.hasNext()){
-            LogRecord record = iterator.next();
-            Page page = bfPool.getPage(record.pageID, tx, Permission.EXCLUSIVE);
-
-            if(page.getHeader("lsn") < record.lsn){
-                if(record.logtype == LogRecord.insert){
-                    page.insertTuple(new Tuple(record.nextByte, null));
-                }
-                if(record.logtype == LogRecord.update){
-                    page.update(record.offset, new Tuple(record.nextByte, null));
-                }
-                if(record.logtype == LogRecord.delete){
-                    page.deleteTuple(record.offset);
-                }
-                if(record.logtype == LogRecord.clr){
-                    undo(record.tId, record.lsn);
-                }
-            }
-        }
-
-    }
 
 
     /*
     * used when setup to create
     * */
-    public static void setupLogFile(String dbname, boolean isNew, TupleDesc td) throws IOException {
-        LogRecord.setTupleDesc(td);
+    public static void setupLogFile(String dbname, TupleDesc td1) throws IOException {
+        LogRecord.setTupleDesc(td1);
         dbName = dbname;
-        if(isNew){
-//            create new log file
-            File logfile = new File (Utils.dbFolderPath +"/"+ dbname + ".log" );
+        td = td1;
+        File logfile = new File(Utils.dbFolderPath + "/" + dbname + ".log");
+        if (!logfile.exists()) {
             logfile.createNewFile();
         }
-        LogRecordPage.setFile(dbname+ ".log");
+        LogRecordPage.setFile(logfile);
     }
 
 
     /*
     * adds a commit record to logfile
     * */
-    public synchronized void commit(int tID){
+    public synchronized void commit(int tID) throws IOException {
+        int prevLsn = tIDMapLastLsn.get(tID);
         lsn++;
-        LogRecord commitRecord = null;
+        LogRecord commitRecord = new LogRecord(prevLsn, LogRecord.commitType, new byte[td.tupleSize()], new byte[td.tupleSize()], -1, tID, -1);
         logRecordList.add(commitRecord);
         writeLogRecord(lsn);
     }
+
 
 
     /*
@@ -111,11 +88,32 @@ public class Recovery {
     * undo the changes to the last
     * */
     public synchronized void abort(int tID) throws IOException {
+        int prevLsn = tIDMapLastLsn.get(tID);
         lsn++;
-        LogRecord crlRecord = null;
+        LogRecord crlRecord = new LogRecord(prevLsn, LogRecord.abortType, new byte[10], new byte[10], -1, tID, -1);
         logRecordList.add(crlRecord);
         undo(tID, lsn);
         writeLogRecord(lsn);
+    }
+
+
+
+    /*
+     * flush the log till the given lsn
+     * */
+    private void writeLogRecord(int lsn) throws IOException {
+        LogRecordPage logRecordPage = new LogRecordPage(pageId);
+        Iterator<LogRecord> iter = logRecordList.iterator();
+        while (iter.hasNext()){
+            LogRecord tempLogRecord = iter.next();
+            if(!logRecordPage.addLogRecord(tempLogRecord)){
+                logRecordPage.writePageToDisk();
+                pageId++;
+                logRecordPage = new LogRecordPage(pageId);
+                logRecordPage.addLogRecord(tempLogRecord);
+            }
+        }
+        logRecordPage.writePageToDisk();
     }
 
 
@@ -127,26 +125,54 @@ public class Recovery {
     * */
     private void undo(int tid, int lsn) throws IOException {
         LogRecord temp = new LogRecord(lsn);
-
-
     }
+
 
 
     /*
-    * flush the log till the given lsn
+    * done after analysis phase when recovering the database
+    *
     * */
-    private void writeLogRecord(int lsn){
-        LogRecordPage page = new LogRecordPage();
+    private void redo(){
 
-        Iterator<LogRecord> iter = logRecordList.iterator();
-        while (iter.hasNext()){
-            iter.next();
-        }
-        while (lastwriteLsn == lsn){
-            lastwriteLsn++;
-            writeLogRecord(lastwriteLsn);
 
-        }
     }
+
+
+
+    /*
+     * iterates over log records and recreates the database
+     * consists of analysis, redo, undo phases
+     * */
+    public void recover(String dbName, Manager bfPool, Transaction tx, TupleDesc td) throws IOException, InterruptedException {
+        LogRecord.setTupleDesc(td);
+        setupLogFile(dbName, td);
+        LogIterator iterator = new LogIterator(true);
+        if(iterator.hasNext()){
+            LogRecord record = iterator.next();
+            Page page = bfPool.getPage(record.pageID, tx, Permission.EXCLUSIVE);
+
+            if(page.getHeader(PageHeaderEnum.LSN) < record.lsn){
+                if(record.logtype == LogRecord.updateType){
+                    page.insertTuple(new Tuple(record.nextByte, null));
+                }
+                if(record.logtype == LogRecord.updateType){
+                    page.update(record.offset, new Tuple(record.nextByte, null));
+                }
+                if(record.logtype == LogRecord.updateType){
+                    page.deleteTuple(record.offset);
+                }
+                if(record.logtype == LogRecord.updateType){
+                    undo(record.tId, record.lsn);
+                }
+            }
+        }
+
+    }
+
+
+
+
+
 
 }
