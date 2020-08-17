@@ -23,7 +23,7 @@ public class Transaction {
     private Set<Integer> pagesXLocked;
     private boolean explicit;
     private static Recovery recoveryManager = new Recovery();
-    private int prevLsn = 0;
+    private int prevLsn = -1;
     private static final Logger logger = Logger.getLogger(Transaction.class.getName());
 
 
@@ -143,7 +143,6 @@ public class Transaction {
     * lsn is used to update the page LSN
     * */
     public int addLogRecord(LogRecord record){
-        record.prevLsn = prevLsn;
         prevLsn = recoveryManager.addLogRecord(record, tID);
         return prevLsn;
     }

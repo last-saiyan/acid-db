@@ -20,29 +20,32 @@ public class LogRecordPage {
     public LogRecordPage(int pageId) {
         headers = new HashMap<>();
         headers.put("count", 0);
-        headers.put("ID", pageId);
-        pageData = new byte[pageSize];
+        headers.put("id", pageId);
+        pageData = new byte[pageSize - headers.size()*4];
     }
 
     public LogRecordPage(byte[] data){
-        pageData = data;
+
+        headers = decodeHeader(data);
+
+        pageData = new byte[pageSize - headers.size()*4];
+        System.arraycopy(data, headers.size()*4, pageData, 0, pageData.length);
+
     }
 
 
     public static void setFile(File logFileName) throws FileNotFoundException {
         logRecordFile = new RandomAccessFile(logFileName, "rw");
-
     }
 
 
 
     public boolean addLogRecord(LogRecord logRecord){
         byte[] recordData = logRecord.encodeLog();
-
         int recordCount = getHeader("count");
 //        find better approach as the header can be updated
         int headerSize = headers.size()*4;
-        int offset = headerSize + recordCount*LogRecord.size();
+        int offset = recordCount*LogRecord.size();
         if(((recordCount+1)*LogRecord.size() + headerSize) < pageSize){
             System.arraycopy(recordData, 0, pageData, offset, recordData.length);
             headers.put("count", recordCount+1);
@@ -52,25 +55,19 @@ public class LogRecordPage {
     }
 
 
-    private byte[] encodePageData(){
-        int headerSize = headers.size();
-        int recordCount = getHeader("count");
-        byte[] data = new byte[recordCount*LogRecord.size()];
-
-        System.arraycopy(pageData, headerSize, data, 0, data.length);
-        return data;
-    }
-
-
     public byte[] encodeHeader(){
         int headerSize = headers.size();
         byte[] headerByte = new byte[headerSize*4];
         int index = 0;
-        for(Map.Entry<String, Integer> entry : headers.entrySet()){
-            byte[] temp = Utils.intToByte(entry.getValue());
-            System.arraycopy(temp,0,headerByte,index*4,temp.length);
-            index++;
-        }
+
+        byte[] temp = Utils.intToByte(headers.get("count"));
+        System.arraycopy(temp,0,headerByte,index*4,temp.length);
+
+
+        index = 1;
+        temp = Utils.intToByte(headers.get("id"));
+        System.arraycopy(temp,0,headerByte,index*4,temp.length);
+
         return headerByte;
     }
 
@@ -81,10 +78,11 @@ public class LogRecordPage {
         byte[] size = new byte[4], id = new byte[4];
 
         System.arraycopy(data,0, size,0,size.length);
-        System.arraycopy(data,size.length, id,0,id.length);
-
-        header.put("id", Utils.byteToInt(id));
         header.put("count", Utils.byteToInt(size));
+
+        System.arraycopy(data,size.length, id,0,id.length);
+        header.put("id", Utils.byteToInt(id));
+
         return header;
     }
 
@@ -98,14 +96,14 @@ public class LogRecordPage {
 
 
     public void writePageToDisk() throws IOException {
-        int pageID = getHeader("ID");
+        int pageID = getHeader("id");
+
         int offset = pageID*pageSize;
         logRecordFile.seek(offset);
 
         byte[] data = new byte[Utils.pageSize];
-        System.arraycopy(encodeHeader(),0, data, 0, headers.size()*4);
-
-        byte[] pageData = encodePageData();
+        byte[] headerData = encodeHeader();
+        System.arraycopy(headerData,0, data, 0, headers.size()*4);
         System.arraycopy(pageData, 0, data, headers.size()*4, (pageData.length));
 
         logRecordFile.write(data);
@@ -122,7 +120,7 @@ public class LogRecordPage {
 
 
     public LogRecordPage getNextPage() throws IOException {
-        int pageID = getHeader("ID");
+        int pageID = getHeader("id");
         pageID++;
         if (pageID > pageCount())
             return null;
@@ -130,7 +128,7 @@ public class LogRecordPage {
     }
 
     public LogRecordPage getPrevPage() throws IOException {
-        int pageID = getHeader("ID");
+        int pageID = getHeader("id");
         pageID--;
         if(pageID<0)
             return null;

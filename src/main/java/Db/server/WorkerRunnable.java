@@ -77,7 +77,7 @@ public class WorkerRunnable implements Runnable {
                                     tx = null;
                                 }
                             }
-                            else if(query.getQuery().transaction.equals("abort")){
+                            else if(query.getQuery().transaction.equals("rollback")){
 
                                 if(tx == null){
                                     output.write("no transaction is running".getBytes());

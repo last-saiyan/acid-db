@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 public class Recovery {
-    public int lsn = 0;
+    public int lsn = -1;
     HashMap<Integer, Integer> tIDMapLastLsn;
     static String dbName;
     ArrayList<LogRecord> logRecordList;
@@ -53,8 +53,6 @@ public class Recovery {
     }
 
 
-
-
     /*
     * used when setup to create
     * */
@@ -75,10 +73,11 @@ public class Recovery {
     * */
     public synchronized void commit(int tID) throws IOException {
         int prevLsn = tIDMapLastLsn.get(tID);
-        lsn++;
         LogRecord commitRecord = new LogRecord(prevLsn, LogRecord.commitType, new byte[td.tupleSize()], new byte[td.tupleSize()], -1, tID, -1);
-        logRecordList.add(commitRecord);
-        writeLogRecord(lsn);
+        addLogRecord(commitRecord, tID);
+
+        writeLogRecord();
+        logRecordList.clear();
     }
 
 
@@ -89,11 +88,18 @@ public class Recovery {
     * */
     public synchronized void abort(int tID) throws IOException {
         int prevLsn = tIDMapLastLsn.get(tID);
-        lsn++;
-        LogRecord crlRecord = new LogRecord(prevLsn, LogRecord.abortType, new byte[10], new byte[10], -1, tID, -1);
-        logRecordList.add(crlRecord);
-        undo(tID, lsn);
-        writeLogRecord(lsn);
+        LogRecord abortRecord = new LogRecord(prevLsn, LogRecord.abortType, new byte[td.tupleSize()], new byte[td.tupleSize()], -1, tID, -1);
+        addLogRecord(abortRecord, tID);
+        writeLogRecord();
+
+        LogRecord prevLogRecord = abortRecord;
+        while (prevLogRecord.prevLsn != -1) {
+            LogRecord clrRecord = new LogRecord(lsn, LogRecord.clrType, tID, prevLogRecord.prevLsn);
+            addLogRecord(clrRecord, tID);
+            prevLogRecord = LogRecord.getLogRecord(prevLogRecord.prevLsn);
+        }
+
+        writeLogRecord();
     }
 
 
@@ -101,9 +107,11 @@ public class Recovery {
     /*
      * flush the log till the given lsn
      * */
-    private void writeLogRecord(int lsn) throws IOException {
+    private void writeLogRecord() throws IOException {
         LogRecordPage logRecordPage = new LogRecordPage(pageId);
+
         Iterator<LogRecord> iter = logRecordList.iterator();
+
         while (iter.hasNext()){
             LogRecord tempLogRecord = iter.next();
             if(!logRecordPage.addLogRecord(tempLogRecord)){
@@ -113,6 +121,7 @@ public class Recovery {
                 logRecordPage.addLogRecord(tempLogRecord);
             }
         }
+
         logRecordPage.writePageToDisk();
     }
 
@@ -124,7 +133,7 @@ public class Recovery {
     * question what should i update the page LSN?
     * */
     private void undo(int tid, int lsn) throws IOException {
-        LogRecord temp = new LogRecord(lsn);
+        LogRecord temp =  LogRecord.getLogRecord(lsn);
     }
 
 

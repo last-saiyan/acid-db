@@ -12,7 +12,7 @@ public class LogRecord {
 
     int pageID;
     int tId;
-
+    int undoNextLSN;
 
     public static int updateType = 1;
     public static int commitType = 2;
@@ -39,28 +39,43 @@ public class LogRecord {
         this.offset = offset;
     }
 
+    public LogRecord(int prevLsn, int logtype, int tId, int undoNextLSN){
+        this.prevLsn = prevLsn;
+        this.logtype = logtype;
+        this.tId = tId;
+        this.undoNextLSN = undoNextLSN;
+        prevByte = new byte[td.tupleSize()];
+        nextByte = new byte[td.tupleSize()];
+    }
 
-    static void setTupleDesc(TupleDesc tupleDesc){
+    public static void setTupleDesc(TupleDesc tupleDesc){
         td = tupleDesc;
     }
 
 
-    public LogRecord(int lsn) throws IOException {
+    public static LogRecord getLogRecord(int lsn)  {
         int pageCapacity = Utils.pageSize/size();
-
-        int pageIdD = lsn/pageCapacity;
-
-        LogRecordPage page = LogRecordPage.getPage(pageIdD);
+        int pageID = lsn/pageCapacity;
         int recordId = lsn%pageCapacity;
-
         int pageOffset = recordId*size();
-        byte[] recordData = new byte[size()];
-        System.arraycopy(page.pageData, offset, recordData, 0, recordData.length);
-        new LogRecord(recordData);
 
+        LogRecordPage page = null;
+        try {
+            page = LogRecordPage.getPage(pageID);
+        } catch (IOException e) {
+
+            e.printStackTrace();
+        }
+
+        byte[] recordData = new byte[size()];
+        System.arraycopy(page.pageData, pageOffset, recordData, 0, recordData.length);
+
+        return new LogRecord(recordData);
     }
 
+
     public LogRecord(byte[] data){
+
         byte[] intByte = new byte[4];
 
         System.arraycopy(data, 0, intByte, 0, 4);
@@ -72,21 +87,21 @@ public class LogRecord {
         System.arraycopy(data, 8, intByte, 0, 4);
         logtype = Utils.byteToInt(intByte);
 
-        System.arraycopy(data, 16, intByte, 0, 4);
+        System.arraycopy(data, 12, intByte, 0, 4);
         pageID = Utils.byteToInt(intByte);
 
-        System.arraycopy(data, 20, intByte, 0, 4);
+        System.arraycopy(data, 16, intByte, 0, 4);
         tId = Utils.byteToInt(intByte);
 
-        System.arraycopy(data, 24, intByte, 0, 4);
+        System.arraycopy(data, 20, intByte, 0, 4);
         offset = Utils.byteToInt(intByte);
 
         byte[] prevByte = new byte[td.tupleSize()];
-        System.arraycopy(data, 28, prevByte, 0, td.tupleSize());
+        System.arraycopy(data, 24, prevByte, 0, td.tupleSize());
         this.prevByte = prevByte;
 
         byte[] nextByte = new byte[td.tupleSize()];
-        System.arraycopy(data, (28+td.tupleSize()), nextByte, 0, td.tupleSize());
+        System.arraycopy(data, (24 + td.tupleSize()), nextByte, 0, td.tupleSize());
         this.nextByte = nextByte;
 
     }
@@ -120,19 +135,22 @@ public class LogRecord {
         intByte = Utils.intToByte(tId);
         System.arraycopy(intByte, 0, recordData, 16, 4);
 
+        intByte = Utils.intToByte(offset);
+        System.arraycopy(intByte, 0, recordData, 20, 4);
+
         if(prevByte == null){
             prevByte = new byte[td.tupleSize()];
         }
-        System.arraycopy(prevByte, 0, recordData, 20, td.tupleSize());
+        System.arraycopy(prevByte, 0, recordData, 24, td.tupleSize());
 
-        System.arraycopy(nextByte, 0, recordData, (20+td.tupleSize()), 4);
+        System.arraycopy(nextByte, 0, recordData, (24+td.tupleSize()), 4);
 
         return recordData;
     }
 
     public static int size(){
 //        20 is the size of other int fields, need to find a better way to do this
-        return td.tupleSize()*2 + 20;
+        return td.tupleSize()*2 + 24;
     }
 
 }
