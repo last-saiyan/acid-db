@@ -2,6 +2,8 @@ package Db.Tx;
 
 
 import Db.Utils;
+import Db.diskManager.Page;
+import Db.diskManager.PageHeaderEnum;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -14,20 +16,21 @@ public class LogRecordPage {
 
     static int pageSize = Utils.pageSize;
     byte[] pageData;
-    HashMap<String, Integer> headers;
+    HashMap<PageHeaderEnum, Integer> headers;
     static RandomAccessFile logRecordFile;
 
+    /*
+    * constructor to create empty page
+    * */
     public LogRecordPage(int pageId) {
         headers = new HashMap<>();
-        headers.put("count", 0);
-        headers.put("id", pageId);
+        headers.put(PageHeaderEnum.SIZE, 0);
+        headers.put(PageHeaderEnum.ID, pageId);
         pageData = new byte[pageSize - headers.size()*4];
     }
 
     public LogRecordPage(byte[] data){
-
         headers = decodeHeader(data);
-
         pageData = new byte[pageSize - headers.size()*4];
         System.arraycopy(data, headers.size()*4, pageData, 0, pageData.length);
 
@@ -39,16 +42,14 @@ public class LogRecordPage {
     }
 
 
-
     public boolean addLogRecord(LogRecord logRecord){
         byte[] recordData = logRecord.encodeLog();
-        int recordCount = getHeader("count");
-//        find better approach as the header can be updated
+        int recordCount = getSize();
         int headerSize = headers.size()*4;
         int offset = recordCount*LogRecord.size();
         if(((recordCount+1)*LogRecord.size() + headerSize) < pageSize){
             System.arraycopy(recordData, 0, pageData, offset, recordData.length);
-            headers.put("count", recordCount+1);
+            headers.put(PageHeaderEnum.SIZE, recordCount+1);
             return true;
         }
         return false;
@@ -60,34 +61,46 @@ public class LogRecordPage {
         byte[] headerByte = new byte[headerSize*4];
         int index = 0;
 
-        byte[] temp = Utils.intToByte(headers.get("count"));
+        byte[] temp = Utils.intToByte(getSize());
         System.arraycopy(temp,0,headerByte,index*4,temp.length);
 
 
         index = 1;
-        temp = Utils.intToByte(headers.get("id"));
+        temp = Utils.intToByte(getId());
         System.arraycopy(temp,0,headerByte,index*4,temp.length);
 
         return headerByte;
     }
 
 
-    public HashMap<String, Integer> decodeHeader(byte[] data){
 
-        HashMap<String,Integer> header = new HashMap();
+    public int getId(){
+        return getHeader(PageHeaderEnum.ID);
+    }
+
+
+
+    public int getSize(){
+        return getHeader(PageHeaderEnum.SIZE);
+    }
+
+
+    public HashMap<PageHeaderEnum, Integer> decodeHeader(byte[] data){
+
+        HashMap<PageHeaderEnum, Integer> header = new HashMap();
         byte[] size = new byte[4], id = new byte[4];
 
         System.arraycopy(data,0, size,0,size.length);
-        header.put("count", Utils.byteToInt(size));
+        header.put(PageHeaderEnum.SIZE, Utils.byteToInt(size));
 
         System.arraycopy(data,size.length, id,0,id.length);
-        header.put("id", Utils.byteToInt(id));
+        header.put(PageHeaderEnum.ID, Utils.byteToInt(id));
 
         return header;
     }
 
 
-    public int getHeader(String headerName){
+    public int getHeader(PageHeaderEnum headerName){
         if(headers.containsKey(headerName)){
             return headers.get(headerName);
         }
@@ -96,7 +109,7 @@ public class LogRecordPage {
 
 
     public void writePageToDisk() throws IOException {
-        int pageID = getHeader("id");
+        int pageID = getId();
 
         int offset = pageID*pageSize;
         logRecordFile.seek(offset);
@@ -112,6 +125,9 @@ public class LogRecordPage {
     public static LogRecordPage getPage(int pageID) throws IOException {
 //        todo check if its present
         int offset = pageID*pageSize;
+        if (offset<0){
+            return null;
+        }
         byte[] pageData = new byte[Utils.pageSize];
         logRecordFile.seek(offset);
         logRecordFile.read(pageData);
@@ -120,7 +136,7 @@ public class LogRecordPage {
 
 
     public LogRecordPage getNextPage() throws IOException {
-        int pageID = getHeader("id");
+        int pageID = getId();
         pageID++;
         if (pageID > pageCount())
             return null;
@@ -128,7 +144,7 @@ public class LogRecordPage {
     }
 
     public LogRecordPage getPrevPage() throws IOException {
-        int pageID = getHeader("id");
+        int pageID = getId();
         pageID--;
         if(pageID<0)
             return null;

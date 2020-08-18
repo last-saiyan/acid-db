@@ -1,6 +1,8 @@
 package Db.Tx;
 
 
+import Db.diskManager.PageHeaderEnum;
+
 import java.io.IOException;
 
 public class LogIterator {
@@ -62,7 +64,7 @@ public class LogIterator {
     private LogRecord getNext() throws IOException {
         int headerSize = 0;
         int recordSize = 0;
-        int count = page.getHeader("count");
+        int count = page.getHeader(PageHeaderEnum.SIZE);
 
         if(recordIndexInPage < count) {
             byte[] data = page.pageData;
