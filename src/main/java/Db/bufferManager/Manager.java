@@ -159,7 +159,7 @@ public class Manager {
             tempPage = insertNewPage(tx);
         }
         LogRecord insertLogRecord = new LogRecord(tx.getPrevLsn(),
-                LogRecord.updateType, null, tuple.getBytes(),
+                LogRecord.LogType.UPDATE, null, tuple.getBytes(),
                 tempPage.getHeader(PageHeaderEnum.ID),
                 tx.getTID(),
                 tempPage.getHeader(PageHeaderEnum.SIZE)

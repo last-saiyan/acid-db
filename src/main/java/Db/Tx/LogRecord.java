@@ -2,50 +2,83 @@ package Db.Tx;
 
 import Db.Utils;
 import Db.catalog.TupleDesc;
+import Db.diskManager.PageHeaderEnum;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class LogRecord {
 
-    int lsn;
-    int prevLsn;
+    private TreeMap <PageHeaderEnum, Integer> headerMap ;
 
-    int pageID;
-    int tId;
-    int undoNextLSN;
+    private static int headerSize;
 
-    public static int updateType = 1;
-    public static int commitType = 2;
-    public static int abortType = 3;
-    public static int endType = 4;
-    public static int clrType = 5;
+    public enum LogType{
+        UPDATE, COMMIT, ABORT, END, CLR
+    }
 
+    private static HashMap<LogType, Integer> logTypeMap;
 
+    static {
+        logTypeMap = new HashMap();
+        logTypeMap.put(LogType.UPDATE, 1);
+        logTypeMap.put(LogType.COMMIT, 2);
+        logTypeMap.put(LogType.ABORT, 3);
+        logTypeMap.put(LogType.END, 4);
+        logTypeMap.put(LogType.CLR, 5);
+
+        PageHeaderEnum[] headers = {PageHeaderEnum.ID, PageHeaderEnum.LSN, PageHeaderEnum.PREV_LSN,
+                PageHeaderEnum.LOG_TYPE, PageHeaderEnum.OFFSET, PageHeaderEnum.TID, PageHeaderEnum.UNDO_NEXT_LSN};
+
+        headerSize = headers.length;
+    }
 
     byte[] prevByte;
     byte[] nextByte;
-    int logtype;
-    int offset;
+
     static TupleDesc td;
 
 
-    public LogRecord(int prevLsn, int logtype, byte[] prev, byte[] next, int pageID, int tId, int offset){
-        this.prevLsn = prevLsn;
-        this.logtype = logtype;
-        this.pageID = pageID;
-        this.tId = tId;
+    public LogRecord(int prevLsn, LogType logtype, byte[] prev, byte[] next, int pageID, int tId, int offset){
+        headerMap = new TreeMap<>();
+        headerMap.put(PageHeaderEnum.PREV_LSN, prevLsn);
+        headerMap.put(PageHeaderEnum.LOG_TYPE, logTypeMap.get(logtype));
+        headerMap.put(PageHeaderEnum.ID, pageID);
+        headerMap.put(PageHeaderEnum.TID, tId);
+        headerMap.put(PageHeaderEnum.OFFSET, offset);
+        headerMap.put(PageHeaderEnum.UNDO_NEXT_LSN, -1);
+        headerMap.put(PageHeaderEnum.LSN, -1);
+
+        if (prev == null){
+            prev = new byte[td.tupleSize()];
+        }
+        if (next == null){
+            next = new byte[td.tupleSize()];
+        }
         prevByte = prev;
         nextByte = next;
-        this.offset = offset;
     }
 
-    public LogRecord(int prevLsn, int logtype, int tId, int undoNextLSN){
-        this.prevLsn = prevLsn;
-        this.logtype = logtype;
-        this.tId = tId;
-        this.undoNextLSN = undoNextLSN;
+    public LogRecord(int prevLsn, LogType logtype, int tId, int undoNextLSN){
+        headerMap = new TreeMap<>();
+        headerMap.put(PageHeaderEnum.PREV_LSN, prevLsn);
+        headerMap.put(PageHeaderEnum.LOG_TYPE,  logTypeMap.get(logtype));
+        headerMap.put(PageHeaderEnum.TID, tId);
+        headerMap.put(PageHeaderEnum.UNDO_NEXT_LSN, undoNextLSN);
+        headerMap.put(PageHeaderEnum.ID, -1);
+        headerMap.put(PageHeaderEnum.OFFSET, -1);
+        headerMap.put(PageHeaderEnum.LSN, -1);
+
         prevByte = new byte[td.tupleSize()];
         nextByte = new byte[td.tupleSize()];
+    }
+
+
+    int getPrevLsn(){
+        return headerMap.get(PageHeaderEnum.PREV_LSN);
     }
 
     public static void setTupleDesc(TupleDesc tupleDesc){
@@ -63,7 +96,6 @@ public class LogRecord {
         try {
             page = LogRecordPage.getPage(pageID);
         } catch (IOException e) {
-
             e.printStackTrace();
         }
 
@@ -75,82 +107,65 @@ public class LogRecord {
 
 
     public LogRecord(byte[] data){
+        headerMap = new TreeMap<>();
+        headerMap.put(PageHeaderEnum.PREV_LSN, -1);
+        headerMap.put(PageHeaderEnum.LOG_TYPE, -1);
+        headerMap.put(PageHeaderEnum.TID, -1);
+        headerMap.put(PageHeaderEnum.UNDO_NEXT_LSN, -1);
+        headerMap.put(PageHeaderEnum.ID, -1);
+        headerMap.put(PageHeaderEnum.OFFSET, -1);
+        headerMap.put(PageHeaderEnum.LSN, -1);
 
-        byte[] intByte = new byte[4];
 
-        System.arraycopy(data, 0, intByte, 0, 4);
-        lsn = Utils.byteToInt(intByte);
+        byte[] intByte = new byte[4];;
+        int index = 0;
 
-        System.arraycopy(data, 4, intByte, 0, 4);
-        prevLsn = Utils.byteToInt(intByte);
+        for (Map.Entry<PageHeaderEnum, Integer>entry: headerMap.entrySet()){
+            System.arraycopy(data, index*4, intByte, 0, intByte.length);
+            int temp = Utils.byteToInt(intByte);
+            headerMap.put(entry.getKey(), temp);
+            index++;
+        }
 
-        System.arraycopy(data, 8, intByte, 0, 4);
-        logtype = Utils.byteToInt(intByte);
+        prevByte = new byte[td.tupleSize()];
+        System.arraycopy(data, index*4, prevByte, 0, td.tupleSize());
 
-        System.arraycopy(data, 12, intByte, 0, 4);
-        pageID = Utils.byteToInt(intByte);
+        index = index*4 + prevByte.length;
 
-        System.arraycopy(data, 16, intByte, 0, 4);
-        tId = Utils.byteToInt(intByte);
-
-        System.arraycopy(data, 20, intByte, 0, 4);
-        offset = Utils.byteToInt(intByte);
-
-        byte[] prevByte = new byte[td.tupleSize()];
-        System.arraycopy(data, 24, prevByte, 0, td.tupleSize());
-        this.prevByte = prevByte;
-
-        byte[] nextByte = new byte[td.tupleSize()];
-        System.arraycopy(data, (24 + td.tupleSize()), nextByte, 0, td.tupleSize());
-        this.nextByte = nextByte;
+        nextByte = new byte[td.tupleSize()];
+        System.arraycopy(data, index, nextByte, 0, td.tupleSize());
 
     }
 
 
     public void setLsn(int lsn){
-        this.lsn = lsn;
+        headerMap.put(PageHeaderEnum.LSN, lsn);
     }
 
 
     /*
-    * todo - find better way to do this if number of items increases
     *
     * */
     public byte[] encodeLog(){
         byte[] recordData = new byte[size()];
         byte[] intByte;
+        int index = 0;
 
-        intByte = Utils.intToByte(lsn);
-        System.arraycopy(intByte, 0, recordData, 0, 4);
-
-        intByte = Utils.intToByte(prevLsn);
-        System.arraycopy(intByte, 0, recordData, 4, 4);
-
-        intByte = Utils.intToByte(logtype);
-        System.arraycopy(intByte, 0, recordData, 8, 4);
-
-        intByte = Utils.intToByte(pageID);
-        System.arraycopy(intByte, 0, recordData, 12, 4);
-
-        intByte = Utils.intToByte(tId);
-        System.arraycopy(intByte, 0, recordData, 16, 4);
-
-        intByte = Utils.intToByte(offset);
-        System.arraycopy(intByte, 0, recordData, 20, 4);
-
-        if(prevByte == null){
-            prevByte = new byte[td.tupleSize()];
+        for (Map.Entry<PageHeaderEnum, Integer>entry: headerMap.entrySet()){
+            intByte = Utils.intToByte(entry.getValue());
+            System.arraycopy(intByte, 0, recordData, index*4, intByte.length);
+            index++;
         }
-        System.arraycopy(prevByte, 0, recordData, 24, td.tupleSize());
 
-        System.arraycopy(nextByte, 0, recordData, (24+td.tupleSize()), 4);
-
+        System.arraycopy(prevByte, 0, recordData, index*4, td.tupleSize());
+        index = index*4 + prevByte.length;
+        System.arraycopy(nextByte, 0, recordData, index, nextByte.length);
         return recordData;
     }
 
+
     public static int size(){
-//        20 is the size of other int fields, need to find a better way to do this
-        return td.tupleSize()*2 + 24;
+        return td.tupleSize()*2 + headerSize*4;
     }
 
 }
