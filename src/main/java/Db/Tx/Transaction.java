@@ -1,5 +1,7 @@
 package Db.Tx;
 
+import Db.catalog.TupleDesc;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -136,6 +138,10 @@ public class Transaction {
         return tID;
     }
 
+
+    public void recover(String dbName, TupleDesc td) throws IOException, InterruptedException {
+        recoveryManager.recovery(dbName, td, this);
+    }
 
 
     /*

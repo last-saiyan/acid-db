@@ -6,12 +6,13 @@ import Db.catalog.TupleDesc;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class Page implements Utils {
 
-    private HashMap<PageHeaderEnum, Integer> pageHeader = new HashMap();
+    private TreeMap<PageHeaderEnum, Integer> pageHeader = new TreeMap();
     public byte[] pageData;
-    public TupleDesc td;
+    public static TupleDesc td;
     public int pageDataCapacity;
 
     /*
@@ -23,6 +24,7 @@ public class Page implements Utils {
 
         pageHeader.put(PageHeaderEnum.ID, id);
         pageHeader.put(PageHeaderEnum.SIZE, 0);
+        pageHeader.put(PageHeaderEnum.LSN, -1);
         pageData = new byte[Utils.pageSize - pageHeader.size()*4];
         pageDataCapacity = Utils.pageSize - pageHeader.size()*4;
         this.td = td;
@@ -75,6 +77,15 @@ public class Page implements Utils {
     }
 
 
+    /*
+    * used for recovery
+    * replaces bytes for the offset
+    * */
+    public void replaceTuple(int id, Tuple tuple, TupleDesc td){
+        int offset = id * td.tupleSize();
+        System.arraycopy(tuple.getBytes(), 0, pageData, offset, td.tupleSize());
+    }
+
 
     private byte[] headerToByte(){
         int headerSize = pageHeader.size();
@@ -93,17 +104,19 @@ public class Page implements Utils {
     * in the same order
     *
     * */
-    private HashMap<PageHeaderEnum, Integer>decodeHeader(byte[] page){
+    private TreeMap<PageHeaderEnum, Integer>decodeHeader(byte[] page){
+        TreeMap<PageHeaderEnum,Integer> headerMap = new TreeMap();
+        headerMap.put(PageHeaderEnum.LSN, 0);
+        headerMap.put(PageHeaderEnum.ID, 0);
+        headerMap.put(PageHeaderEnum.SIZE, 0);
 
-        HashMap<PageHeaderEnum,Integer> header = new HashMap();
-        byte[] size = new byte[4], id = new byte[4];
-
-        System.arraycopy(page,0, size,0,size.length);
-        System.arraycopy(page,size.length, id,0,id.length);
-
-        header.put(PageHeaderEnum.ID, Utils.byteToInt(id));
-        header.put(PageHeaderEnum.SIZE, Utils.byteToInt(size));
-        return header;
+        byte[] temp = new byte[4];
+        int index = 0;
+        for(Map.Entry<PageHeaderEnum, Integer>header: headerMap.entrySet()){
+            System.arraycopy(page,index, temp,0,temp.length);
+            headerMap.put(header.getKey(), Utils.byteToInt(temp));
+        }
+        return headerMap;
     }
 
     public void setLsn(int lsn){

@@ -154,7 +154,7 @@ public class LogRecordPage {
 
 
     public static int pageCount() throws IOException {
-        return (int) logRecordFile.length();
+        return (int) logRecordFile.length()/pageSize;
     }
 
 

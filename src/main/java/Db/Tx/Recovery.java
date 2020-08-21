@@ -1,5 +1,6 @@
 package Db.Tx;
 
+import Db.Acid;
 import Db.Utils;
 import Db.bufferManager.Manager;
 import Db.catalog.Tuple;
@@ -12,13 +13,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class Recovery {
     public int lsn = -1;
     HashMap<Integer, Integer> tIDMapLastLsn;
     static String dbName;
     ArrayList<LogRecord> logRecordList;
-    HashMap<Integer, Integer> recLsnPIDMap;
+    HashMap<Integer, Integer> pIDRecLsnMap;
     private int pageId;
     private static TupleDesc td;
 
@@ -26,7 +28,7 @@ public class Recovery {
     public Recovery(){
         logRecordList = new ArrayList<>();
         tIDMapLastLsn = new HashMap<>();
-        recLsnPIDMap = new HashMap<>();
+        pIDRecLsnMap = new HashMap<>();
     }
 
 
@@ -72,12 +74,17 @@ public class Recovery {
     * adds a commit record to logfile
     * */
     public synchronized void commit(int tID) throws IOException {
+        if (!tIDMapLastLsn.containsKey(tID)){
+            return;
+        }
+        System.out.println(tIDMapLastLsn.size());
         int prevLsn = tIDMapLastLsn.get(tID);
         LogRecord commitRecord = new LogRecord(prevLsn, LogRecord.LogType.COMMIT, new byte[td.tupleSize()], new byte[td.tupleSize()], -1, tID, -1);
         addLogRecord(commitRecord, tID);
-
+        addLogRecord(new LogRecord(lsn, LogRecord.LogType.END, tID), tID);
         writeLogRecord();
         logRecordList.clear();
+        tIDMapLastLsn.remove(tID);
     }
 
 
@@ -87,6 +94,9 @@ public class Recovery {
     * undo the changes to the last
     * */
     public synchronized void abort(int tID) throws IOException {
+        if (!tIDMapLastLsn.containsKey(tID)){
+            return;
+        }
         int prevLsn = tIDMapLastLsn.get(tID);
         LogRecord abortRecord = new LogRecord(prevLsn, LogRecord.LogType.ABORT, new byte[td.tupleSize()], new byte[td.tupleSize()], -1, tID, -1);
         addLogRecord(abortRecord, tID);
@@ -99,10 +109,131 @@ public class Recovery {
             prevLogRecord = LogRecord.getLogRecord(prevLogRecord.getPrevLsn());
         }
 
+        addLogRecord(new LogRecord(lsn, LogRecord.LogType.END, tID), tID);
         writeLogRecord();
+        tIDMapLastLsn.remove(tID);
     }
 
 
+    /*
+    *
+    *
+    * */
+    public void recovery(String dbName, TupleDesc td, Transaction tx) throws IOException, InterruptedException {
+        try {
+            setupLogFile(dbName, td);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        int pageCount = LogRecordPage.pageCount();
+        int pageIndex = 0;
+        while (pageIndex <= pageCount){
+            LogRecordPage logRecordPage = LogRecordPage.getPage(pageIndex);
+            int recordCount =  logRecordPage.getSize();
+
+            int recordIndex = 0;
+            while (recordIndex < recordCount){
+                LogRecord logRecord = LogRecord.getLogRecord(recordIndex, logRecordPage);
+
+                LogRecord.LogType logtype = logRecord.getLogType();
+
+                if (logtype == LogRecord.LogType.END){
+                    tIDMapLastLsn.remove(logRecord.getTid());
+                }
+
+                tIDMapLastLsn.put(logRecord.getTid(), logRecord.getLsn());
+
+                if(!pIDRecLsnMap.containsKey( logRecord.getPid() )){
+                    pIDRecLsnMap.put(logRecord.getPid(), logRecord.getLsn());
+                }
+                recordIndex++;
+            }
+            pageIndex++;
+        }
+
+
+        redo(tx);
+        undo();
+        tx.releaseAllLocks();
+    }
+
+
+
+    private void redo(Transaction tx) throws IOException, InterruptedException {
+        int recLsn = 0;
+        Manager manager = Acid.getDatabase().bufferPoolManager;
+
+//        get smallest reclsn from pIDRecLsnMap
+//        for(Map.Entry<Integer, Integer> abc: pIDRecLsnMap.entrySet()){
+//            if()
+//        }
+
+        int pageCount = LogRecordPage.pageCount();
+        int pageIndex = 0;
+
+        while (pageIndex <= pageCount){
+            LogRecordPage logRecordPage = LogRecordPage.getPage(pageIndex);
+            int recordCount =  logRecordPage.getSize();
+
+            int recordIndex = 0;
+            while (recordIndex < recordCount){
+                LogRecord logRecord = LogRecord.getLogRecord(recordIndex, logRecordPage);
+                LogRecord.LogType logtype = logRecord.getLogType();
+
+                if (!logtype.equals(LogRecord.LogType.END)){
+                    tIDMapLastLsn.remove(logRecord.getTid());
+                    recordIndex++;
+                    continue;
+                }
+                if (!logtype.equals(LogRecord.LogType.UPDATE)){
+                    recordIndex++;
+                    continue;
+                }
+
+
+                Page page = manager.getPage(logRecord.getPid(), tx, Permission.EXCLUSIVE);
+//                redo
+//                if(!pIDRecLsnMap.containsKey(page.pageID())){
+//                    continue;
+//                }
+//
+//
+//                if(pIDRecLsnMap.containsKey(page.pageID()) &&
+//                        (pIDRecLsnMap.get(page.pageID()) > page.getHeader(PageHeaderEnum.LSN))){
+//                    continue;
+//                }
+//
+//                if (page.getHeader(PageHeaderEnum.LSN) >= logRecord.getLsn()){
+//                    continue;
+//                }
+
+//                System.out.println(page.getHeader(PageHeaderEnum.LSN) + " page " + logRecord.getPid());
+                if(
+                        !(!pIDRecLsnMap.containsKey(page.pageID()) ||
+                                (pIDRecLsnMap.containsKey(page.pageID() ) &&
+                                        (pIDRecLsnMap.get(page.pageID()) > page.getHeader(PageHeaderEnum.LSN))) ||
+                                (page.getHeader(PageHeaderEnum.LSN) >= logRecord.getLsn())
+                        )
+                ){
+                    Tuple temp = new Tuple(logRecord.getNextByte(), td);
+
+                    page.replaceTuple(logRecord.getOffset(), temp, td);
+                }
+
+                recordIndex++;
+            }
+            pageIndex++;
+        }
+        //smallest lsn in dpt
+    }
+
+
+    private void undo(){
+
+
+
+    }
 
     /*
      * flush the log till the given lsn

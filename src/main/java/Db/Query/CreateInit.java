@@ -2,6 +2,7 @@ package Db.query;
 
 import Db.Acid;
 import Db.Tx.Recovery;
+import Db.Tx.Transaction;
 import Db.catalog.Field;
 import Db.catalog.TupleDesc;
 import Db.catalog.TypesEnum;
@@ -70,7 +71,7 @@ public class CreateInit {
     * else if present initialize TupleDesc and database file
     *
     * */
-    public void handleInit() throws IOException, ClassNotFoundException {
+    public void handleInit() throws IOException, ClassNotFoundException, InterruptedException {
         DiskManager diskManager = db.diskManager;
 
         if(diskManager.databaseExist(query.database)){
@@ -78,7 +79,9 @@ public class CreateInit {
             diskManager.setDatabase(query.database);
             db.dbPageCount = diskManager.dbSize();
             db.setTupleDesc(td);
+            Transaction tx = new Transaction(false);
             Recovery.setupLogFile(query.database,  td);
+            tx.recover(query.database, td);
         }else {
             throw new FileNotFoundException(query.database);
         }

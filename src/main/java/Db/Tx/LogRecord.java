@@ -5,7 +5,6 @@ import Db.catalog.TupleDesc;
 import Db.diskManager.PageHeaderEnum;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -76,6 +75,20 @@ public class LogRecord {
         nextByte = new byte[td.tupleSize()];
     }
 
+    public LogRecord(int prevLsn, LogType logtype, int tId){
+        headerMap = new TreeMap<>();
+        headerMap.put(PageHeaderEnum.PREV_LSN, prevLsn);
+        headerMap.put(PageHeaderEnum.LOG_TYPE,  logTypeMap.get(logtype));
+        headerMap.put(PageHeaderEnum.TID, tId);
+        headerMap.put(PageHeaderEnum.UNDO_NEXT_LSN, -1);
+        headerMap.put(PageHeaderEnum.ID, -1);
+        headerMap.put(PageHeaderEnum.OFFSET, -1);
+        headerMap.put(PageHeaderEnum.LSN, -1);
+
+        prevByte = new byte[td.tupleSize()];
+        nextByte = new byte[td.tupleSize()];
+    }
+
 
     int getPrevLsn(){
         return headerMap.get(PageHeaderEnum.PREV_LSN);
@@ -102,6 +115,14 @@ public class LogRecord {
         byte[] recordData = new byte[size()];
         System.arraycopy(page.pageData, pageOffset, recordData, 0, recordData.length);
 
+        return new LogRecord(recordData);
+    }
+
+
+    public static LogRecord getLogRecord(int recordId, LogRecordPage page)  {
+        int pageOffset = recordId*size();
+        byte[] recordData = new byte[size()];
+        System.arraycopy(page.pageData, pageOffset, recordData, 0, recordData.length);
         return new LogRecord(recordData);
     }
 
@@ -138,8 +159,35 @@ public class LogRecord {
     }
 
 
-    public void setLsn(int lsn){
+    void setLsn(int lsn){
         headerMap.put(PageHeaderEnum.LSN, lsn);
+    }
+
+    int getLsn(){
+        return headerMap.get(PageHeaderEnum.LSN);
+    }
+    int getTid(){
+        return headerMap.get(PageHeaderEnum.TID);
+    }
+    int getPid(){
+        return headerMap.get(PageHeaderEnum.ID);
+    }
+    int getOffset(){
+        return headerMap.get(PageHeaderEnum.OFFSET);
+    }
+    byte[] getNextByte(){
+        return nextByte;
+    }
+
+
+    LogType getLogType(){
+        int logID = headerMap.get(PageHeaderEnum.LOG_TYPE);
+        for(Map.Entry<LogType, Integer> logType: logTypeMap.entrySet()){
+            if (logID == logType.getValue()){
+                return logType.getKey();
+            }
+        }
+        return null;
     }
 
 
