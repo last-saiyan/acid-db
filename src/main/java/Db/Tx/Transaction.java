@@ -180,10 +180,6 @@ public class Transaction {
 
 
     public void commit(){
-        logger.log(Level.INFO, "Transaction - {0} is committed", tID );
-
-//        need to do more work here
-
         try {
             recoveryManager.commit(tID);
         } catch (IOException e) {
@@ -191,21 +187,19 @@ public class Transaction {
             abort();
         }
         releaseAllLocks();
+        logger.log(Level.INFO, "Transaction - {0} is committed", tID );
     }
 
 
 
     public void abort() {
-//        need to do more work here
-        logger.log(Level.INFO, "Transaction - {0} is Aborted", tID );
-
-
         try {
             recoveryManager.abort(tID);
         } catch (IOException e) {
             e.printStackTrace();
         }
         releaseAllLocks();
+        logger.log(Level.INFO, "Transaction - {0} is Aborted", tID );
     }
 
 }

@@ -93,12 +93,12 @@ public class Page implements Utils {
         } else if (byteArrEmpty(prevByte)) {
 //            insert
             int size = pageSize();
-            pageHeader.put(PageHeaderEnum.SIZE, size + 1);
+            pageHeader.put(PageHeaderEnum.SIZE, size + td.tupleSize());
             System.arraycopy(tuple.getBytes(), 0, pageData, offset, td.tupleSize());
         } else if (byteArrEmpty(tuple.getBytes())) {
 //            delete
             int size = pageSize();
-            pageHeader.put(PageHeaderEnum.SIZE, size - 1);
+            pageHeader.put(PageHeaderEnum.SIZE, size - td.tupleSize());
             System.arraycopy(tuple.getBytes(), 0, pageData, offset, td.tupleSize());
         } else {
             System.arraycopy(tuple.getBytes(), 0, pageData, offset, td.tupleSize());

@@ -27,13 +27,17 @@ public class TupleIterator implements DbIterator {
     @Override
     public void open(){
         this.page = pageIterator.getNextPage();
-        this.tDesc = page.getTupleDesc();
+        if(page!= null) {
+            this.tDesc = page.getTupleDesc();
+        }
         tupleIndex = 0;
     }
+
 
     public void delete(){
         page.deleteTuple(tupleIndex);
     }
+
 
     public void insert(Tuple tuple){
         page.insertTuple(tuple);

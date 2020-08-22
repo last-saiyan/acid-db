@@ -21,7 +21,7 @@ public class Recovery {
     static String dbName;
     ArrayList<LogRecord> logRecordList;
     HashMap<Integer, Integer> pIDRecLsnMap;
-    private int pageId;
+    private static int pageId;
     private static TupleDesc td;
 
 
@@ -67,6 +67,7 @@ public class Recovery {
             logfile.createNewFile();
         }
         LogRecordPage.setFile(logfile);
+        pageId = (int) logfile.length()/Utils.pageSize;
     }
 
 
@@ -77,11 +78,12 @@ public class Recovery {
         if (!tIDMapLastLsn.containsKey(tID)){
             return;
         }
-        System.out.println(tIDMapLastLsn.size());
         int prevLsn = tIDMapLastLsn.get(tID);
-        LogRecord commitRecord = new LogRecord(prevLsn, LogRecord.LogType.COMMIT, new byte[td.tupleSize()], new byte[td.tupleSize()], -1, tID, -1);
-        addLogRecord(commitRecord, tID);
-        addLogRecord(new LogRecord(lsn, LogRecord.LogType.END, tID), tID);
+        LogRecord commitRecord = new LogRecord(prevLsn, LogRecord.LogType.COMMIT,
+                new byte[td.tupleSize()], new byte[td.tupleSize()], -1,
+                tID, -1);
+        prevLsn = addLogRecord(commitRecord, tID);
+        addLogRecord(new LogRecord(prevLsn, LogRecord.LogType.END, tID), tID);
         writeLogRecord();
         logRecordList.clear();
         tIDMapLastLsn.remove(tID);
@@ -160,14 +162,7 @@ public class Recovery {
 
 
     private void redo(Transaction tx) throws IOException, InterruptedException {
-        int recLsn = 0;
         Manager manager = Acid.getDatabase().bufferPoolManager;
-
-//        get smallest reclsn from pIDRecLsnMap
-//        for(Map.Entry<Integer, Integer> abc: pIDRecLsnMap.entrySet()){
-//            if()
-//        }
-
         int pageCount = LogRecordPage.pageCount();
         int pageIndex = 0;
 
@@ -184,7 +179,6 @@ public class Recovery {
                     recordIndex++;
                     continue;
                 }
-
                 if (!
                         (!pIDRecLsnMap.containsKey(logRecord.getPid()) ||
                                 (pIDRecLsnMap.containsKey(logRecord.getPid()) &&
@@ -193,12 +187,10 @@ public class Recovery {
                         )
                 ){
                     Page page = manager.getPage(logRecord.getPid(), tx, Permission.EXCLUSIVE);
-
                     if (! (page.getHeader(PageHeaderEnum.LSN) >= logRecord.getLsn()) ){
                         Tuple temp = new Tuple(logRecord.getNextByte(), td);
                         page.replaceTuple(logRecord.getOffset(), temp, td);
                     }
-
                 }
                 recordIndex++;
             }
@@ -217,10 +209,8 @@ public class Recovery {
      * flush the log till the given lsn
      * */
     private void writeLogRecord() throws IOException {
-        LogRecordPage logRecordPage = new LogRecordPage(pageId);
-
+        LogRecordPage logRecordPage =  LogRecordPage.getPage(pageId);
         Iterator<LogRecord> iter = logRecordList.iterator();
-
         while (iter.hasNext()){
             LogRecord tempLogRecord = iter.next();
             if(!logRecordPage.addLogRecord(tempLogRecord)){
@@ -230,7 +220,6 @@ public class Recovery {
                 logRecordPage.addLogRecord(tempLogRecord);
             }
         }
-
         logRecordPage.writePageToDisk();
     }
 
