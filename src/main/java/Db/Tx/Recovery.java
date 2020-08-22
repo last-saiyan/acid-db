@@ -140,18 +140,17 @@ public class Recovery {
 
                 if (logtype == LogRecord.LogType.END){
                     tIDMapLastLsn.remove(logRecord.getTid());
+                }else {
+                    tIDMapLastLsn.put(logRecord.getTid(), logRecord.getLsn());
                 }
 
-                tIDMapLastLsn.put(logRecord.getTid(), logRecord.getLsn());
-
-                if(!pIDRecLsnMap.containsKey( logRecord.getPid() )){
+                if(!pIDRecLsnMap.containsKey( logRecord.getPid()) && logRecord.getPid() != -1 ){
                     pIDRecLsnMap.put(logRecord.getPid(), logRecord.getLsn());
                 }
                 recordIndex++;
             }
             pageIndex++;
         }
-
 
         redo(tx);
         undo();
@@ -181,51 +180,30 @@ public class Recovery {
                 LogRecord logRecord = LogRecord.getLogRecord(recordIndex, logRecordPage);
                 LogRecord.LogType logtype = logRecord.getLogType();
 
-                if (!logtype.equals(LogRecord.LogType.END)){
-                    tIDMapLastLsn.remove(logRecord.getTid());
-                    recordIndex++;
-                    continue;
-                }
-                if (!logtype.equals(LogRecord.LogType.UPDATE)){
+                if (!(logtype.equals(LogRecord.LogType.UPDATE) || logtype.equals(LogRecord.LogType.CLR) )){
                     recordIndex++;
                     continue;
                 }
 
-
-                Page page = manager.getPage(logRecord.getPid(), tx, Permission.EXCLUSIVE);
-//                redo
-//                if(!pIDRecLsnMap.containsKey(page.pageID())){
-//                    continue;
-//                }
-//
-//
-//                if(pIDRecLsnMap.containsKey(page.pageID()) &&
-//                        (pIDRecLsnMap.get(page.pageID()) > page.getHeader(PageHeaderEnum.LSN))){
-//                    continue;
-//                }
-//
-//                if (page.getHeader(PageHeaderEnum.LSN) >= logRecord.getLsn()){
-//                    continue;
-//                }
-
-//                System.out.println(page.getHeader(PageHeaderEnum.LSN) + " page " + logRecord.getPid());
-                if(
-                        !(!pIDRecLsnMap.containsKey(page.pageID()) ||
-                                (pIDRecLsnMap.containsKey(page.pageID() ) &&
-                                        (pIDRecLsnMap.get(page.pageID()) > page.getHeader(PageHeaderEnum.LSN))) ||
-                                (page.getHeader(PageHeaderEnum.LSN) >= logRecord.getLsn())
+                if (!
+                        (!pIDRecLsnMap.containsKey(logRecord.getPid()) ||
+                                (pIDRecLsnMap.containsKey(logRecord.getPid()) &&
+                                        (pIDRecLsnMap.get(logRecord.getPid()) > logRecord.getLsn())
+                                )
                         )
                 ){
-                    Tuple temp = new Tuple(logRecord.getNextByte(), td);
+                    Page page = manager.getPage(logRecord.getPid(), tx, Permission.EXCLUSIVE);
 
-                    page.replaceTuple(logRecord.getOffset(), temp, td);
+                    if (! (page.getHeader(PageHeaderEnum.LSN) >= logRecord.getLsn()) ){
+                        Tuple temp = new Tuple(logRecord.getNextByte(), td);
+                        page.replaceTuple(logRecord.getOffset(), temp, td);
+                    }
+
                 }
-
                 recordIndex++;
             }
             pageIndex++;
         }
-        //smallest lsn in dpt
     }
 
 

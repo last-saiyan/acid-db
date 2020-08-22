@@ -34,7 +34,7 @@ public class Transaction {
         pagesXLocked = new HashSet<>();
         tID = incrementID();
         this.explicit = explicit;
-        recoveryManager.newTransaction(tID);
+//        recoveryManager.newTransaction(tID);
     }
 
 
