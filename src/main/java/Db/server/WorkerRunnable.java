@@ -93,6 +93,8 @@ public class WorkerRunnable implements Runnable {
                     }catch (FileNotFoundException e){
                         output.write("database not present".getBytes());
                         logger.log(Level.INFO, e.toString());
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
 
                     if(!( query.getQuery().type.equals("init") || query.getQuery().type.equals("transaction") || query.getQuery().type.equals("create"))) {

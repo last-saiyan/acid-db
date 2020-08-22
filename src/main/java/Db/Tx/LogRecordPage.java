@@ -2,15 +2,13 @@ package Db.Tx;
 
 
 import Db.Utils;
-import Db.diskManager.Page;
 import Db.diskManager.PageHeaderEnum;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashMap;
-import java.util.Map;
+
 
 public class LogRecordPage {
 

@@ -53,9 +53,7 @@ public class Manager {
     * reads page of given ID from Disk
     * */
     private Page readPageFromDisk(int pageId){
-
         if(diskManager.dbSize() <= pageId){
-            System.out.println("getting new page " +pageId);
             return diskManager.getNewPage();
         }
         return diskManager.readPage(pageId);
@@ -83,7 +81,6 @@ public class Manager {
                 flushPageToDisk(victimID);
                 pageMapping[victimID].pId = pId;
                 pageMapping[victimID].pinCounter++;
-
                 Page page = readPageFromDisk(pId);
                 bufferPool[victimID] = page;
                 replacer.updateEntry(pId);
@@ -168,7 +165,7 @@ public class Manager {
                 LogRecord.LogType.UPDATE, null, tuple.getBytes(),
                 tempPage.getHeader(PageHeaderEnum.ID),
                 tx.getTID(),
-                (tempPage.getHeader(PageHeaderEnum.SIZE)/Utils.pageSize)
+                (tempPage.getHeader(PageHeaderEnum.SIZE)/tuple.getBytes().length)
         );
         int lsn = tx.addLogRecord(insertLogRecord);
         tempPage.setLsn(lsn);
