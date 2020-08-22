@@ -41,8 +41,7 @@ public class DiskManager implements Constants {
     public boolean databaseExist(String dbName){
 //        should i validate the file size?
         File dbFile =  new File(dbFolderPath +"/" + dbName + ".cat");
-        boolean a=  dbFile.isFile();
-        return a;
+        return dbFile.isFile();
     }
 
 
@@ -127,7 +126,13 @@ public class DiskManager implements Constants {
     }
 
 
+    /*
+    * todo fix if page is greater than dbsize
+    * */
     public Page readPage(int id){
+        if(id >= dbSize()){
+            throw new RuntimeException("accessing page not present in db");
+        }
         byte[] page = new byte[Utils.pageSize+1];
         try {
             ffile.seek(id*Utils.pageSize);

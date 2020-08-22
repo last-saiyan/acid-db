@@ -81,11 +81,39 @@ public class Page implements Utils {
     * used for recovery
     * replaces bytes for the offset
     * */
-    public void replaceTuple(int id, Tuple tuple, TupleDesc td){
+    public void replaceTuple(int id, Tuple tuple, TupleDesc td) {
         int offset = id * td.tupleSize();
-        System.arraycopy(tuple.getBytes(), 0, pageData, offset, td.tupleSize());
+        byte[] prevByte = new byte[td.tupleSize()];
+        System.arraycopy(pageData, offset, prevByte, 0, td.tupleSize());
+
+//        handling insert/delete/update
+        if (byteArrEmpty(prevByte) && byteArrEmpty(tuple.getBytes())) {
+//            todo update vs insert
+            System.arraycopy(tuple.getBytes(), 0, pageData, offset, td.tupleSize());
+        } else if (byteArrEmpty(prevByte)) {
+//            insert
+            int size = pageSize();
+            pageHeader.put(PageHeaderEnum.SIZE, size + 1);
+            System.arraycopy(tuple.getBytes(), 0, pageData, offset, td.tupleSize());
+        } else if (byteArrEmpty(tuple.getBytes())) {
+//            delete
+            int size = pageSize();
+            pageHeader.put(PageHeaderEnum.SIZE, size - 1);
+            System.arraycopy(tuple.getBytes(), 0, pageData, offset, td.tupleSize());
+        } else {
+            System.arraycopy(tuple.getBytes(), 0, pageData, offset, td.tupleSize());
+        }
     }
 
+
+    private boolean byteArrEmpty(byte[] bytes){
+        for (int i=0;i< bytes.length; i++){
+            if (bytes[i]!=0){
+                return false;
+            }
+        }
+        return true;
+    }
 
     private byte[] headerToByte(){
         int headerSize = pageHeader.size();
