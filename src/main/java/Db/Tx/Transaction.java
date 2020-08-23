@@ -194,8 +194,10 @@ public class Transaction {
 
     public void abort() {
         try {
-            recoveryManager.abort(tID);
+            recoveryManager.abort(tID, this);
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
         releaseAllLocks();

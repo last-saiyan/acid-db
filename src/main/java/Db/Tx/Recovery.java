@@ -95,7 +95,8 @@ public class Recovery {
     * adds abort record to logfile
     * undo the changes to the last
     * */
-    public synchronized void abort(int tID) throws IOException {
+    public synchronized void abort(int tID, Transaction tx) throws IOException, InterruptedException {
+        Manager manager = Acid.getDatabase().bufferPoolManager;
         if (!tIDMapLastLsn.containsKey(tID)){
             return;
         }
@@ -109,6 +110,10 @@ public class Recovery {
             LogRecord clrRecord = new LogRecord(lsn, LogRecord.LogType.CLR, tID, prevLogRecord.getPrevLsn());
             addLogRecord(clrRecord, tID);
             prevLogRecord = LogRecord.getLogRecord(prevLogRecord.getPrevLsn());
+
+            Page page = manager.getPage(prevLogRecord.getPid(), tx, Permission.EXCLUSIVE);
+            Tuple prevTuple = new Tuple(prevLogRecord.getPrevByte(), td);
+            page.replaceTuple(prevLogRecord.getOffset(), prevTuple, td);
         }
 
         addLogRecord(new LogRecord(lsn, LogRecord.LogType.END, tID), tID);
@@ -189,6 +194,7 @@ public class Recovery {
                     Page page = manager.getPage(logRecord.getPid(), tx, Permission.EXCLUSIVE);
                     if (! (page.getHeader(PageHeaderEnum.LSN) >= logRecord.getLsn()) ){
                         Tuple temp = new Tuple(logRecord.getNextByte(), td);
+
                         page.replaceTuple(logRecord.getOffset(), temp, td);
                     }
                 }
@@ -200,7 +206,6 @@ public class Recovery {
 
 
     private void undo(){
-
 
 
     }

@@ -138,7 +138,7 @@ public class LogRecord {
         headerMap.put(PageHeaderEnum.LSN, -1);
 
 
-        byte[] intByte = new byte[4];;
+        byte[] intByte = new byte[4];
         int index = 0;
 
         for (Map.Entry<PageHeaderEnum, Integer>entry: headerMap.entrySet()){
@@ -177,6 +177,9 @@ public class LogRecord {
     }
     byte[] getNextByte(){
         return nextByte;
+    }
+    byte[] getPrevByte(){
+        return prevByte;
     }
 
 
