@@ -1,15 +1,14 @@
 package Db.iterator;
 
-import Db.Tx.LogRecord;
+
 import Db.Tx.Transaction;
 import Db.bufferManager.Manager;
 import Db.catalog.Tuple;
 
 import java.io.IOException;
 
-public class Insertion extends Operator {
+public class Insertion implements DbIterator {
 
-    private Tuple data;
     private DbIterator child;
     private Manager bfPool;
     private Transaction tx;
@@ -26,24 +25,14 @@ public class Insertion extends Operator {
         child.open();
     }
 
-    @Override
-    public void close() {
-
-    }
 
     @Override
-    protected Tuple fetchNext() {
-        if(child.hasNext()){
-            Tuple tuple = child.next();
-            try {
-                bfPool.insertTuple(tuple, tx);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return tuple;
+    public Tuple next() throws IOException, InterruptedException {
+        Tuple tuple = child.next();
+        if (tuple == null){
+            return null;
         }
-        return null;
+        bfPool.insertTuple(tuple, tx);
+        return tuple;
     }
 }

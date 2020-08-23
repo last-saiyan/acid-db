@@ -2,16 +2,13 @@ package Db.iterator;
 
 import Db.catalog.Tuple;
 
+import java.io.IOException;
+
 public interface DbIterator {
 
 
     public void open();
 
-    public void close();
-
-    public Tuple next();
-
-    public boolean hasNext();
-
+    public Tuple next() throws IOException, InterruptedException;
 
 }

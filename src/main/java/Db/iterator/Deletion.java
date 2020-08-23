@@ -2,7 +2,9 @@ package Db.iterator;
 
 import Db.catalog.Tuple;
 
-public class Deletion extends Operator {
+import java.io.IOException;
+
+public class Deletion implements DbIterator {
     private DbIterator child;
 
     public Deletion(DbIterator child){
@@ -16,22 +18,13 @@ public class Deletion extends Operator {
     }
 
     @Override
-    public void close() {
-        child.close();
-    }
-
-    @Override
-    public Tuple fetchNext() {
-        if(child.hasNext()) {
-            Tuple temp = child.next();
-            ((TupleIterator) child).delete();
-            return temp;
+    public Tuple next() throws IOException, InterruptedException {
+        Tuple tuple = child.next();
+        if (tuple == null){
+            return null;
         }
-        return null;
+        ((TupleIterator) child).delete();
+        return tuple;
     }
 
-    @Override
-    public boolean hasNext() {
-        return child.hasNext();
-    }
 }

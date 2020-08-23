@@ -49,7 +49,7 @@ public class TestPage {
 
 
     @Test
-    void testEncodeDecode(){
+    void testEncodeDecode() throws IOException, InterruptedException {
         TupleDesc td = getTD();
 
         Page page = new Page(1,td);
@@ -72,15 +72,17 @@ public class TestPage {
             count++;
         }
 
-        when(hfIter.hasNext()).thenReturn(false);
-        when(hfIter.getNextPage()).thenReturn(page, null);
+        when(hfIter.next()).thenReturn(page, null);
 
         TupleIterator tupleIterator = new TupleIterator(hfIter, null);
 
         int i = 0;
         tupleIterator.open();
-        while (tupleIterator.hasNext()){
+        while (true){
             tuple = tupleIterator.next();
+            if (tuple == null){
+                break;
+            }
             Value<String> value = tuple.getMapValue().get("columnB");
             int temp = column2.get(i);
             Assertions.assertEquals(value.toString(), Integer.toString(temp));

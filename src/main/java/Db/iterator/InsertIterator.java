@@ -1,9 +1,8 @@
 package Db.iterator;
 
+
 import Db.query.ColValue;
 import Db.catalog.*;
-
-import java.rmi.activation.UnknownObjectException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -34,18 +33,15 @@ public class InsertIterator implements DbIterator {
         iterator = tuples.iterator();
     }
 
-    @Override
-    public void close() {
 
-    }
 
     @Override
     public Tuple next() {
-        return iterator.next();
+        if (iterator.hasNext()) {
+            return iterator.next();
+        }else {
+            return null;
+        }
     }
 
-    @Override
-    public boolean hasNext() {
-        return iterator.hasNext();
-    }
 }

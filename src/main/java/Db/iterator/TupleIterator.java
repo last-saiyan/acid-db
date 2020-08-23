@@ -1,12 +1,12 @@
 package Db.iterator;
 
-import Db.Acid;
-import Db.Tx.Transaction;
-import Db.Utils;
+
 import Db.diskManager.Page;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
 import Db.query.predicate.Predicate;
+
+import java.io.IOException;
 
 
 public class TupleIterator implements DbIterator {
@@ -15,7 +15,7 @@ public class TupleIterator implements DbIterator {
     private int tupleIndex;
     private TupleDesc tDesc;
     private HeapFileIterator pageIterator;
-    private Tuple nextTuple;
+
     private Predicate predicate;
 
     public TupleIterator(HeapFileIterator pageIterator, Predicate predicate){
@@ -26,12 +26,10 @@ public class TupleIterator implements DbIterator {
 
     @Override
     public void open(){
-        this.page = pageIterator.getNextPage();
-        if(page!= null) {
-            this.tDesc = page.getTupleDesc();
-        }
+        pageIterator.open();
         tupleIndex = 0;
     }
+
 
 
     public void delete(){
@@ -55,88 +53,53 @@ public class TupleIterator implements DbIterator {
     }
 
 
-    /*
-    * checks if index is less than page size
-    * if no more tuples in current page
-    * gets new page from pageIterator
-    * */
-    @Override
-    public boolean hasNext(){
-        if(nextTuple == null){
-            nextTuple = filterTuple();
-        }
 
-        if(nextTuple == null){
-            return false;
-        }else {
-            return true;
-        }
-
-    }
-
-
-
-    public boolean hasNextTuple(){
-        int pageSize = page.pageSize();
-        if( (tupleIndex*tDesc.tupleSize()) < pageSize){
-            return true;
-        }else{
-
-            page = pageIterator.getNextPage();
-            tupleIndex = 0;
-            if(page == null){
-                return false;
-            }else {
-                return true;
-            }
-        }
-    }
-
-
-
-    public Tuple filterTuple(){
+    private Tuple filterTuple() throws IOException, InterruptedException {
         Tuple tempTuple = nextTuple();
 
-        while (tempTuple != null && !(predicate.evaluate(tempTuple).finalValue)){
+        while (tempTuple != null){
+            if (predicate == null){
+                return tempTuple;
+            }
+            if(predicate.evaluate(tempTuple).finalValue){
+                return tempTuple;
+            }
             tempTuple = nextTuple();
         }
-
         return tempTuple;
     }
 
 
-    public Tuple nextTuple(){
-        if(hasNextTuple()){
-            int offset = tupleIndex*tDesc.tupleSize();
+
+    private Tuple nextTuple() throws IOException, InterruptedException {
+        if (page == null){
+            page = pageIterator.next();
+            if (page == null){
+                return null;
+            }
+            tDesc = page.getTupleDesc();
+            tupleIndex = 0;
+        }
+
+//        todo use index for size in page, modify page.java
+        int pageSize = page.pageSize();
+        int offset = tupleIndex*tDesc.tupleSize();
+        if(offset < pageSize){
             byte[] tupleByte = new byte[tDesc.tupleSize()];
             System.arraycopy(page.pageData,offset,tupleByte,0,tDesc.tupleSize());
             tupleIndex++;
             return new Tuple(tupleByte, tDesc);
-        }else{
-            return null;
+        } else {
+            page = null;
+            return nextTuple();
         }
     }
 
 
 
     @Override
-    public Tuple next(){
-
-        if(hasNext()) {
-            if (nextTuple != null) {
-                Tuple tempTuple = nextTuple;
-                nextTuple = null;
-                return tempTuple;
-            }
-        }
-        return null;
-    }
-
-
-    @Override
-    public void close(){
-        tupleIndex = 0;
-        pageIterator.close();
+    public Tuple next() throws IOException, InterruptedException {
+        return filterTuple();
     }
 
 }

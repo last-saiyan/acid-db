@@ -120,6 +120,8 @@ public class WorkerRunnable implements Runnable {
         } catch (IOException | ClassNotFoundException e) {
             //report exception somewhere.
             logger.log(Level.INFO, e.toString());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
     }

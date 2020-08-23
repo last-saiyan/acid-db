@@ -1,60 +1,51 @@
 package Db.iterator;
 
-import Db.Tx.Transaction;
-import Db.catalog.Field;
-import Db.catalog.Tuple;
-import Db.catalog.TupleDesc;
-import Db.catalog.Value;
 
+import Db.catalog.Tuple;
+import Db.catalog.Value;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Projection extends Operator {
+public class Projection implements DbIterator {
     private DbIterator child;
     private ArrayList<String> outputFieldList;
 
     public Projection(DbIterator child, ArrayList<String> outputFieldList){
-
         this.child = child;
-
         this.outputFieldList = outputFieldList;
     }
+
 
     @Override
     public void open() {
         child.open();
     }
 
-    @Override
-    public void close() {
 
-    }
-
-
-/*
-*
-* create new tuple with values corresponding to output fieldList
-* returns the tuple
-* */
+    /*
+     *
+     * create new tuple with values corresponding to output fieldList
+     * returns the tuple
+     * */
 
     @Override
-    protected Tuple fetchNext() {
-        if(child.hasNext()){
-            Tuple tuple = child.next();
-
-            HashMap<String, Value> tupleMap = tuple.getMapValue();
-
-            HashMap<String, Value> outTupleMap = new HashMap();
-
-            for(int i=0; i<outputFieldList.size(); i++){
-                String fieldName = outputFieldList.get(i);
-                outTupleMap.put(fieldName, tupleMap.get(fieldName));
-            }
-            Tuple outputTuple = new Tuple(outTupleMap);
-            return outputTuple;
-
+    public Tuple next() throws IOException, InterruptedException {
+        Tuple tuple = child.next();
+        if (tuple == null){
+            return null;
         }
 
-        return null;
+        HashMap<String, Value> tupleMap = tuple.getMapValue();
+        HashMap<String, Value> outTupleMap = new HashMap();
+
+        for(int i=0; i<outputFieldList.size(); i++){
+            String fieldName = outputFieldList.get(i);
+            outTupleMap.put(fieldName, tupleMap.get(fieldName));
+        }
+        Tuple outputTuple = new Tuple(outTupleMap);
+        return outputTuple;
     }
+
+
 }

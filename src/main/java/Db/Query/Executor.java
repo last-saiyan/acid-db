@@ -21,13 +21,16 @@ public class Executor {
     /*
     * return this in batches to other end of the network
     * */
-    public void run() throws IOException {
+    public void run() throws IOException, InterruptedException {
 
-        Tuple temp;
+        Tuple tuple;
         iterator.open();
-        while (iterator.hasNext()){
-            temp = iterator.next();
-            outputStream.write(temp.toString().getBytes());
+        while (true){
+            tuple = iterator.next();
+            if (tuple == null){
+                break;
+            }
+            outputStream.write(tuple.toString().getBytes());
         }
     }
 }

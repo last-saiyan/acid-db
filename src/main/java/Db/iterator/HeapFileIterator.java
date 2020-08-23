@@ -3,9 +3,10 @@ package Db.iterator;
 import Db.Tx.Permission;
 import Db.Tx.Transaction;
 import Db.bufferManager.Manager;
-import Db.catalog.Tuple;
 import Db.diskManager.DiskManager;
 import Db.diskManager.Page;
+
+import java.io.IOException;
 
 /*
 * iterates heapfile gives next heapfile
@@ -22,41 +23,30 @@ public class HeapFileIterator {
 
     public HeapFileIterator(Manager mgr, DiskManager dskMgr, Transaction tx, Permission perm){
         bfPoolManager = mgr;
-        pageCount = 0;
         this.dskMgr = dskMgr;
         this.tx = tx;
         this.perm = perm;
     }
 
 
-    public boolean hasNext(){
-        if(pageCount < dskMgr.dbSize()){
-            return true;
-        }else {
-            return false;
-        }
-    }
-
-    public void close(){
+    public void open(){
         pageCount = 0;
     }
 
 
-    public Page getNextPage(){
-        Page page = null;
-
-        if (!hasNext()){
+    public Page next() throws IOException, InterruptedException {
+        if(pageCount < dskMgr.dbSize()){
+            Page page = bfPoolManager.getPage(pageCount, tx, perm);
+            pageCount++;
+            return page;
+        }else {
             return null;
         }
+    }
 
-        try {
-            page = bfPoolManager.getPage(pageCount, tx, perm);
-            pageCount++;
-        } catch (Exception e) {
-//            abort transaction here page not found
-            e.printStackTrace();
-        }
-        return page;
+
+    public void close(){
+        pageCount = 0;
     }
 
 }
