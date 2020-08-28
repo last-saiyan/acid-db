@@ -58,6 +58,10 @@
     ]
   },
 
+  {
+    "type": "delete",
+    "where": "columnB=1"
+  },
 
 
   {

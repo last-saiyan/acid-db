@@ -39,20 +39,22 @@ public class Page implements Utils {
 
 
     public void deleteTuple(int id){
-//        test correctly here
-//        improve logic here
-        id = id * td.tupleSize();
-        int size = pageHeader.get(PageHeaderEnum.SIZE);
-        if(id + td.tupleSize() > size){
-            int src =  (id +1) * td.tupleSize();
-            int dest = id * td.tupleSize() ;
-            int len =  pageData.length - src;
-            System.arraycopy(pageData,src,pageData,dest, len);
-            pageHeader.put(PageHeaderEnum.SIZE, size -  td.tupleSize());
+        int pageSize = pageSize();
+        int startByte = id * td.tupleSize();
+        int endByte = startByte + td.tupleSize();
+//        endByte has to be <= PageHeaderEnum.SIZE
+        if(endByte < pageSize){
+//            need to rearrange the tuple that comes after
+            byte[] temp = new byte[pageSize - endByte];
+            System.arraycopy(pageData, endByte, temp, 0, temp.length);
+            System.arraycopy(temp, 0, pageData, startByte, temp.length);
+            pageHeader.put(PageHeaderEnum.SIZE, pageSize() - td.tupleSize());
+        }else if(endByte == pageSize){
+//            its the last tuple so no need to rearrange
+            pageHeader.put(PageHeaderEnum.SIZE, pageSize() - td.tupleSize());
         }else {
-//
+            throw new RuntimeException("accessing record "+ endByte +" greater than pagesize "+ pageSize);
         }
-
     }
 
     public TupleDesc getTupleDesc(){

@@ -33,6 +33,7 @@ public class TupleIterator implements DbIterator {
 
 
     public void delete(){
+        tupleIndex--;
         page.deleteTuple(tupleIndex);
     }
 

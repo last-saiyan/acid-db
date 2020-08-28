@@ -205,6 +205,11 @@ public class Recovery {
     }
 
 
+    /*
+    * todo implement undo
+    *  undo all failure transactions
+    * do not undo clrs
+    * */
     private void undo(){
 
 
