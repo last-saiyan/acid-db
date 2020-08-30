@@ -1,6 +1,8 @@
 package Db.iterator;
 
 
+import Db.Tx.LogRecord;
+import Db.Tx.Transaction;
 import Db.diskManager.Page;
 import Db.catalog.Tuple;
 import Db.catalog.TupleDesc;
@@ -15,6 +17,7 @@ public class TupleIterator implements DbIterator {
     private int tupleIndex;
     private TupleDesc tDesc;
     private HeapFileIterator pageIterator;
+    private Tuple currentTuple;
 
     private Predicate predicate;
 
@@ -34,13 +37,18 @@ public class TupleIterator implements DbIterator {
 
     public void delete(){
         tupleIndex--;
+        Transaction tx = pageIterator.getTx();
+
+        LogRecord deleteLogRecord = new LogRecord(tx.getPrevLsn(), LogRecord.LogType.UPDATE,
+                currentTuple.getBytes(), new byte[tDesc.tupleSize()],
+                page.pageID(), tx.getTID(), tupleIndex);
+
+        int lsn = tx.addLogRecord(deleteLogRecord);
+
+        page.setLsn(lsn);
         page.deleteTuple(tupleIndex);
     }
 
-
-    public void insert(Tuple tuple){
-        page.insertTuple(tuple);
-    }
 
 
     /*
@@ -49,8 +57,16 @@ public class TupleIterator implements DbIterator {
     * with the updated value
     * */
     public void update( Tuple tuple){
-        delete();
-        insert(tuple);
+        tupleIndex--;
+        Transaction tx = pageIterator.getTx();
+
+        LogRecord updateLogRecord = new LogRecord(tx.getPrevLsn(), LogRecord.LogType.UPDATE,
+                currentTuple.getBytes(), tuple.getBytes(),
+                page.pageID(), tx.getTID(), tupleIndex);
+        int lsn = tx.addLogRecord(updateLogRecord);
+
+        page.setLsn(lsn);
+        page.update(tupleIndex, tuple);
     }
 
 
@@ -100,7 +116,8 @@ public class TupleIterator implements DbIterator {
 
     @Override
     public Tuple next() throws IOException, InterruptedException {
-        return filterTuple();
+        currentTuple = filterTuple();
+        return currentTuple;
     }
 
 }

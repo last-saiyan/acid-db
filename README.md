@@ -8,8 +8,9 @@ this is a toy database built to understand the techniques used in transactional 
 1. transaction commit, abort.
 2. insert
 3. projection(select) supports predicate
-4. delete (todo)
-5. update (todo)
+4. delete
+5. update (WIP)
+6. recovery (WIP)
 
 check [query.md](./src/main/java/Db/Query/query.md) for example queries
 append query with `;` 

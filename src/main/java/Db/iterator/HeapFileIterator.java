@@ -44,6 +44,9 @@ public class HeapFileIterator {
         }
     }
 
+    public Transaction getTx(){
+        return tx;
+    }
 
     public void close(){
         pageCount = 0;
