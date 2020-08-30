@@ -54,10 +54,11 @@ public class Planner {
 //      get these from a static class
         HeapFileIterator pageIter = new HeapFileIterator(bfManager, dskMgr, tx, Permission.EXCLUSIVE);
         DbIterator iter = new TupleIterator(pageIter, predicate);
-//        correct this later implement new operator
-        return null;
 
+        return new Update(iter, query.values, Acid.getDatabase().tupleDesc);
     }
+
+
     private DbIterator insertIterator(QueryMapper query){
 
         DbIterator iter = new InsertIterator(query.values, Acid.getDatabase().tupleDesc);
@@ -65,6 +66,8 @@ public class Planner {
         return new Insertion(iter, bfManager, tx);
 
     }
+
+
     private DbIterator deleteIterator(QueryMapper query, Predicate predicate){
 
 //      get these from a static class

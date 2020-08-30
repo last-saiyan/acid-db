@@ -74,8 +74,8 @@ public class Page implements Utils {
 
 
     public void update(int id, Tuple tuple){
-        deleteTuple(id);
-        insertTuple(tuple);
+        int offset = id * td.tupleSize();
+        System.arraycopy(tuple.getBytes(), 0, pageData, offset, td.tupleSize());
     }
 
 

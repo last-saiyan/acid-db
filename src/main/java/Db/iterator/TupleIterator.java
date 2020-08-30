@@ -67,6 +67,7 @@ public class TupleIterator implements DbIterator {
 
         page.setLsn(lsn);
         page.update(tupleIndex, tuple);
+        tupleIndex++;
     }
 
 

@@ -14,15 +14,11 @@
   {
     "type": "update",
 
-    "where": "a>5",
+    "where": "columnB=1",
     "values": [
       {
         "colName" :"columnA",
         "value": "value1"
-      },
-      {
-        "colName":"columnB",
-        "value": "value2"
       }
     ]
   },

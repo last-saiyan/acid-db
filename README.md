@@ -9,8 +9,10 @@ this is a toy database built to understand the techniques used in transactional 
 2. insert
 3. projection(select) supports predicate
 4. delete
-5. update (WIP)
-6. recovery (WIP)
+5. update
+6. recovery (WIP, implement ARIES undo function)
+
+abort transactions on exceptions, create custom exceptions
 
 check [query.md](./src/main/java/Db/Query/query.md) for example queries
 append query with `;` 
