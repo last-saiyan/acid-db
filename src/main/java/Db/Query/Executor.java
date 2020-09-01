@@ -1,18 +1,17 @@
 package Db.query;
 
-import Db.Tx.Transaction;
 import Db.catalog.Tuple;
 import Db.iterator.DbIterator;
+import Db.server.ServerIO;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class Executor {
     private DbIterator iterator;
-    private OutputStream outputStream;
+    private ServerIO io;
 
-    public Executor(DbIterator iterator, OutputStream outputStream){
-        this.outputStream = outputStream;
+    public Executor(DbIterator iterator, ServerIO io){
+        this.io = io;
         this.iterator = iterator;
     }
 
@@ -30,7 +29,7 @@ public class Executor {
             if (tuple == null){
                 break;
             }
-            outputStream.write(tuple.toString().getBytes());
+            io.write(tuple.toString());
         }
     }
 }

@@ -23,12 +23,22 @@ public class CreateInit {
 
 
 
+    public void execute() throws InterruptedException, IOException, ClassNotFoundException {
+        System.out.println(query.type + " type");
+        if (query.type.equals("create")){
+            handleCreate();
+        }
+        if(query.type.equals("init")){
+            handleInit();
+        }
+    }
+
     /*
     *
     * creates catalog file using the schema
     * creates a db file
     * */
-    public void handleCreate() throws IOException {
+    private void handleCreate() throws IOException {
 
         Acid db = Acid.getDatabase();
         DiskManager diskManager =  db.diskManager;
@@ -71,7 +81,7 @@ public class CreateInit {
     * else if present initialize TupleDesc and database file
     *
     * */
-    public void handleInit() throws IOException, ClassNotFoundException, InterruptedException {
+    private void handleInit() throws IOException, ClassNotFoundException, InterruptedException {
         DiskManager diskManager = db.diskManager;
 
         if(diskManager.databaseExist(query.database)){

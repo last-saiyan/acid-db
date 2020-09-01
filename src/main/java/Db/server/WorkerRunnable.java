@@ -2,10 +2,7 @@ package Db.server;
 
 import Db.Acid;
 import Db.Tx.Transaction;
-import Db.query.CreateInit;
-import Db.query.Executor;
-import Db.query.Planner;
-import Db.query.Query;
+import Db.query.*;
 
 import java.io.*;
 import java.net.Socket;
@@ -15,114 +12,114 @@ import java.util.logging.Logger;
 
 
 public class WorkerRunnable implements Runnable {
+
     private static final Logger logger =
             Logger.getLogger(WorkerRunnable.class.getName());
-    protected Socket clientSocket = null;
+    private Socket clientSocket;
+    private Transaction tx;
 
-    public WorkerRunnable(Socket clientSocket) {
+    WorkerRunnable(Socket clientSocket) {
         this.clientSocket = clientSocket;
     }
 
     @Override
     public void run() {
         try {
-            InputStream input  = clientSocket.getInputStream();
-            OutputStream output = clientSocket.getOutputStream();
-            long time = System.currentTimeMillis();
-            Transaction tx = null;
-            String responseString = "\nconnected to server - " + time + "\n";
-            output.write(responseString.getBytes());
+            ServerIO io = new ServerIO(clientSocket);
 
+            tx = null;
+
+            io.write("\nconnected to server - " + System.currentTimeMillis());
+            InputStream input  = clientSocket.getInputStream();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(input), 1024);
 
-            String queryString = "";
+            StringBuilder queryString = new StringBuilder();
             String tempString ;
             while((tempString = bufferedReader.readLine()) != null){
+
                 tempString = tempString.trim();
-                queryString = queryString + tempString;
+                queryString.append(tempString);
 
                 if( !tempString.equals("") && tempString.charAt(tempString.length()-1) == ';'){
-
-                    queryString = queryString.substring(0, queryString.length()-1);
+                    queryString.deleteCharAt(queryString.length() -1);
                     Acid db = Acid.getDatabase();
-
-                    Query query = new Query(queryString, db.tupleDesc);
-                    queryString = "";
+                    Query query = new Query(queryString.toString(), db.tupleDesc);
+                    queryString.delete(0, queryString.length()-1);
 
                     logger.log(Level.INFO, "new request , {0}" , query.getQuery().type);
 
                     try {
-                        if(query.getQuery().type.equals("init")){
-                            CreateInit init = new CreateInit(db,query.getQuery());
-                            init.handleInit();
-                            output.write("initiliazed database".getBytes());
-                        }
-                        if(query.getQuery().type.equals("create")){
-                            CreateInit create = new CreateInit(db,query.getQuery());
-                            create.handleCreate();
-                            output.write("created database".getBytes());
-                        }
-                        if(query.getQuery().type.equals("transaction")){
-                            if(query.getQuery().transaction.equals("begin")){
-                                if(tx == null){
-                                    tx = new Transaction(true);
-                                }else {
-                                    output.write("transaction is already running".getBytes());
-                                }
-                            }else if(query.getQuery().transaction.equals("commit")){
-                                if(tx == null){
-                                    output.write("no transaction is running".getBytes());
-                                }else {
-                                    tx.commit();
-                                    tx = null;
-                                }
-                            }
-                            else if(query.getQuery().transaction.equals("rollback")){
-
-                                if(tx == null){
-                                    output.write("no transaction is running".getBytes());
-                                }else {
-                                    tx.abort();
-                                    tx = null;
-                                }
-                            }
-                        }
+                        handleQueries(query, db, io);
                     }catch (FileAlreadyExistsException e){
-                        output.write("database already present".getBytes());
+                        io.write("database already present");
                         logger.log(Level.INFO, e.toString());
                     }catch (FileNotFoundException e){
-                        output.write("database not present".getBytes());
+                        io.write("database not present");
                         logger.log(Level.INFO, e.toString());
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-
-                    if(!( query.getQuery().type.equals("init") || query.getQuery().type.equals("transaction") || query.getQuery().type.equals("create"))) {
-//                        individual query has to be treated as a transaction
-                        if(tx == null){
-                            tx = new Transaction(false);
-                        }
-
-                        Planner planner = new Planner(query.getQuery(), query.getPredicate(), tx);
-
-                        Executor executor = new Executor(planner.getplan(), output);
-                        executor.run();
-
-                        if(!tx.isExplicit()){
-                            tx.commit();
-                            tx = null;
-                        }
-                    }
                 }
+
             }
             logger.log(Level.INFO, "connection closed");
 
         } catch (IOException | ClassNotFoundException e) {
             //report exception somewhere.
             logger.log(Level.INFO, e.toString());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
 
     }
+
+
+
+    private void handleQueries(Query query, Acid db, ServerIO io) throws InterruptedException, IOException, ClassNotFoundException {
+
+        if(query.getQuery().type.equals("init") || query.getQuery().type.equals("create")){
+            CreateInit init = new CreateInit(db, query.getQuery());
+            init.execute();
+            io.write( query.getQuery().type + " database " + query.getQuery().database);
+            return;
+        }
+
+        if(query.getQuery().type.equals("transaction")){
+            if(query.getQuery().transaction.equals("begin")){
+                if(tx == null){
+                    tx = new Transaction(true);
+                }else {
+                    io.write("transaction is already running");
+                }
+            }
+
+            if(tx == null){
+                io.write("no transaction is running");
+                return;
+            }
+
+            if(query.getQuery().transaction.equals("commit")){
+                tx.commit();
+                tx = null;
+            }
+            else if(query.getQuery().transaction.equals("rollback")){
+                tx.abort();
+                tx = null;
+            }
+            return;
+        }
+
+        if(tx == null){
+            tx = new Transaction(false);
+        }
+
+        Planner planner = new Planner(query.getQuery(), query.getPredicate(), tx);
+        Executor executor = new Executor(planner.getplan(), io);
+        executor.run();
+
+        if(!tx.isExplicit()){
+            tx.commit();
+            tx = null;
+        }
+    }
+
+
 }

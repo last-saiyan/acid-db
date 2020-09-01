@@ -11,10 +11,9 @@ import java.util.logging.Logger;
 public class Server implements Runnable{
 
 
-    protected int          serverPort   = 8080;
+    protected int          serverPort;
     protected ServerSocket serverSocket = null;
     protected boolean      isStopped    = false;
-    protected Thread       runningThread= null;
     private static final Logger logger =
             Logger.getLogger(Server.class.getName());
 
@@ -31,7 +30,7 @@ public class Server implements Runnable{
             if(isStopped){
                 break;
             }
-            Socket clientSocket = null;
+            Socket clientSocket;
             try {
                 clientSocket = this.serverSocket.accept();
             } catch (IOException e) {
@@ -58,7 +57,7 @@ public class Server implements Runnable{
         try {
             this.serverSocket = new ServerSocket(this.serverPort);
         } catch (IOException e) {
-            throw new RuntimeException("Cannot open port 8080", e);
+            throw new RuntimeException("Cannot open port "+ serverPort, e);
         }
     }
 }
