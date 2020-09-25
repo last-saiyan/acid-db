@@ -24,6 +24,9 @@ public class Predicate {
 
 
     public ExpressionNode evaluate(Tuple tuple){
+        if(predicateString == null){
+            return new ExpressionNode(true);
+        }
         createExpressionTree(td.getFieldMap(), tuple.getMapValue());
         return evaluateTree();
     }
