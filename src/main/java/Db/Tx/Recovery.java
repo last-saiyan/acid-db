@@ -101,7 +101,7 @@ public class Recovery {
         LogRecord abortRecord = new LogRecord(prevLsn, LogRecord.LogType.ABORT, new byte[td.tupleSize()], new byte[td.tupleSize()], -1, tID, -1);
         addLogRecord(abortRecord, tID);
         writeLogRecord();
-
+        logRecordList.clear();
         LogRecord prevLogRecord = abortRecord;
         while (prevLogRecord.getPrevLsn() != -1) {
             LogRecord clrRecord = new LogRecord(lsn, LogRecord.LogType.CLR, tID, prevLogRecord.getPrevLsn());
@@ -115,6 +115,7 @@ public class Recovery {
 
         addLogRecord(new LogRecord(lsn, LogRecord.LogType.END, tID), tID);
         writeLogRecord();
+        logRecordList.clear();
         tIDMapLastLsn.remove(tID);
     }
 
@@ -141,6 +142,7 @@ public class Recovery {
                 LogRecord logRecord = LogRecord.getLogRecord(recordIndex, logRecordPage);
 
                 LogRecord.LogType logtype = logRecord.getLogType();
+
 
                 if (logtype == LogRecord.LogType.END){
                     tIDMapLastLsn.remove(logRecord.getTid());
@@ -211,7 +213,8 @@ public class Recovery {
     * */
     private void undo(Transaction tx) throws IOException, InterruptedException {
         Manager manager = Acid.getDatabase().bufferPoolManager;
-        ArrayList<Integer> toUndo = (ArrayList<Integer>)tIDMapLastLsn.values();
+        Collection<Integer> toUndo = tIDMapLastLsn.values();
+
 
         while (!toUndo.isEmpty()){
             int currLsn = getMax(toUndo);
@@ -255,12 +258,13 @@ public class Recovery {
     /*
     * returns max item and deletes it from the collection
     * */
-    private Integer getMax(ArrayList<Integer> collection){
+    private Integer getMax(Collection<Integer> collection){
 
         Iterator<Integer> iter =  collection.iterator();
-        int max = collection.get(0);
+        int max = iter.next();
+
         int maxIndex = 0;
-        for(int i=0; i< collection.size(); i++){
+        for(int i=1; i< collection.size(); i++){
             int temp = iter.next();
             if(temp > max){
                 maxIndex = i;

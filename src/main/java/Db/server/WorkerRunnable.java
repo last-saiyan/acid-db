@@ -44,7 +44,7 @@ public class WorkerRunnable implements Runnable {
                     queryString.deleteCharAt(queryString.length() -1);
                     Acid db = Acid.getDatabase();
                     Query query = new Query(queryString.toString(), db.tupleDesc);
-                    queryString.delete(0, queryString.length()-1);
+                    queryString.delete(0, queryString.length());
 
                     logger.log(Level.INFO, "new request , {0}" , query.getQuery().type);
 

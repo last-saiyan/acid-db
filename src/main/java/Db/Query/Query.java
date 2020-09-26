@@ -79,10 +79,9 @@ public class Query {
     private QueryMapper queryObject(String queryString){
         Gson gson = new Gson();
         try {
-            QueryMapper query = gson.fromJson(queryString, QueryMapper.class);
-            return query;
+            return gson.fromJson(queryString, QueryMapper.class);
         }catch (com.google.gson.JsonSyntaxException e){
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
