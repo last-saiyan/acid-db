@@ -175,6 +175,7 @@ public class LogRecord {
     int getOffset(){
         return headerMap.get(PageHeaderEnum.OFFSET);
     }
+    int getUndoNextLsn(){ return headerMap.get(PageHeaderEnum.UNDO_NEXT_LSN); }
     byte[] getNextByte(){
         return nextByte;
     }

@@ -185,6 +185,15 @@ public class Recovery {
                     recordIndex++;
                     continue;
                 }
+                if (logtype.equals(LogRecord.LogType.CLR)){
+
+                    LogRecord undoRecord = LogRecord.getLogRecord(logRecord.getUndoNextLsn());
+                    Page page = manager.getPage(undoRecord.getPid(), tx, Permission.EXCLUSIVE);
+                    Tuple prevTuple = new Tuple(undoRecord.getPrevByte(), td);
+                    page.replaceTuple(undoRecord.getOffset(), prevTuple, td);
+
+                }
+
                 if (!
                         (!pIDRecLsnMap.containsKey(logRecord.getPid()) ||
                                 (pIDRecLsnMap.containsKey(logRecord.getPid()) &&
