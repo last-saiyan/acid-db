@@ -121,12 +121,14 @@ public class LogRecordPage {
     }
 
     public static LogRecordPage getPage(int pageID) throws IOException {
-//        todo check if its present
         int offset = pageID*pageSize;
         if (offset<0){
             return null;
         }
-        byte[] pageData = new byte[Utils.pageSize];
+        if( (offset + Utils.pageSize) > logRecordFile.length() ){
+            return new LogRecordPage(pageID);
+        }
+        byte[] pageData = new byte[pageSize];
         logRecordFile.seek(offset);
         logRecordFile.read(pageData);
         return new LogRecordPage(pageData);

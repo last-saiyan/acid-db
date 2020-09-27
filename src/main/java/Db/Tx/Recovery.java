@@ -43,10 +43,14 @@ public class Recovery {
     * returns its lsn
     * rewrite this using immutable data-structures (concurrency)
     * */
-    public synchronized int addLogRecord(LogRecord record, int tID){
+    public synchronized int addLogRecord(LogRecord record, int tID) throws IOException {
         lsn++;
         tIDMapLastLsn.put(tID, lsn);
         record.setLsn(lsn);
+        if(logRecordList.size() > 3){
+            writeLogRecord();
+            logRecordList.clear();
+        }
         logRecordList.add(record);
         return lsn;
     }
@@ -216,14 +220,15 @@ public class Recovery {
 
 
     /*
-    * todo implement undo
     *  undo all failure transactions
     * do not undo clrs
+    * add end record at end of clrs
+    * undo updates
     * */
     private void undo(Transaction tx) throws IOException, InterruptedException {
         Manager manager = Acid.getDatabase().bufferPoolManager;
-        Collection<Integer> toUndo = tIDMapLastLsn.values();
-
+        Collection<Integer> toUndoList = tIDMapLastLsn.values();
+        ArrayList<Integer> toUndo = new ArrayList<>(toUndoList);
 
         while (!toUndo.isEmpty()){
             int currLsn = getMax(toUndo);
@@ -232,20 +237,23 @@ public class Recovery {
 
 //            if clr is last
             if(logrecord.getLogType().equals(LogRecord.LogType.CLR)){
-                if(logrecord.getPrevLsn() == -1){
+                if(logrecord.getUndoNextLsn() == -1){
 //                    no more items so write end record for this transaction
                     LogRecord endLogrecord = new LogRecord(logrecord.getLsn(), LogRecord.LogType.END, logrecord.getTid());
                     lsn++;
                     endLogrecord.setLsn(lsn);
                     logRecordList.add(endLogrecord);
+                    tIDMapLastLsn.remove(logrecord.getTid());
                     writeLogRecord();
                 }else {
-                    toUndo.add(logrecord.getPrevLsn());
+                    toUndo.add(logrecord.getUndoNextLsn());
+
                 }
             }else if(logrecord.getLogType().equals(LogRecord.LogType.UPDATE)){
 //                undo the update
                 Page page = manager.getPage(logrecord.getPid(), tx, Permission.EXCLUSIVE);
                 Tuple temp = new Tuple(logrecord.getPrevByte(), td);
+
                 page.replaceTuple(logrecord.getOffset(), temp, td);
 
 //                write clr
@@ -255,7 +263,9 @@ public class Recovery {
                 logRecordList.add(clrLogrecord);
 
 //                add prevLsn to toUndo
-                toUndo.add(logrecord.getPrevLsn());
+                if(logrecord.getPrevLsn() != -1) {
+                    toUndo.add(logrecord.getPrevLsn());
+                }
             }
 
         }
@@ -267,7 +277,7 @@ public class Recovery {
     /*
     * returns max item and deletes it from the collection
     * */
-    private Integer getMax(Collection<Integer> collection){
+    private Integer getMax(ArrayList<Integer> collection){
 
         Iterator<Integer> iter =  collection.iterator();
         int max = iter.next();

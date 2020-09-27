@@ -149,7 +149,12 @@ public class Transaction {
     * lsn is used to update the page LSN
     * */
     public int addLogRecord(LogRecord record){
-        prevLsn = recoveryManager.addLogRecord(record, tID);
+        try {
+            prevLsn = recoveryManager.addLogRecord(record, tID);
+        } catch (IOException e) {
+            this.abort();
+            e.printStackTrace();
+        }
         return prevLsn;
     }
 
