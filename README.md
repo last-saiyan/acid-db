@@ -22,9 +22,8 @@ append query with `;`
 
 [transaction manager](./src/main/java/Db/Tx/transaction.md)
 
-[iterators](./src/main/java/Db/bufferManager/buffermager.md)
+[iterators](./src/main/java/Db/iterator/iterator.md)
 
-[bufferpool manager](./src/main/java/Db/bufferManager/buffermager.md)
-
+[query.md](./src/main/java/Db/Query/query.md)
 
 
